@@ -1,23 +1,29 @@
-from Algorithms.distance_calculator import RouteCalculator
+#########################################################
+#                                                       #
+# Created on: 11/01/2024                                #
+# Created by: Dennis Botman                             #
+#                                                       #
+#########################################################
+
+from Algorithms.distance_calculator import RoadDistanceCalculator
 import pandas as pd
+import time
 
-df = pd.read_csv('Algorithms/mini.csv')
-rc = RouteCalculator()
-osrm_distances = rc.calculate_routes_from_dataframe(df, method='osrm')
-haversine_matrix = dm.create_distance_matrix(method='haversine')
-osrm_matrix = dm.create_distance_matrix(method='osrm')
 
-print(len(df))
-print(haversine_matrix.shape)
 
-# Example usage:
-# df = pd.DataFrame({
-#     'name': ['Location1', 'Location2'],
-#     'lat': [52.3676, 52.0907],
-#     'lon': [4.9041, 5.1214]
-# })
-# rc = RouteCalculator()
-# osrm_distances = rc.calculate_routes_from_dataframe(df, method='osrm')
-# haversine_distances = rc.calculate_routes_from_dataframe(df, method='haversine')
-# print("OSRM Distances:", osrm_distances)
-# print("Haversine Distances:", haversine_distances)
+
+if __name__ == "__main__":
+    input_df = pd.read_csv("Data\\manyLarge.csv")
+
+    #Get Distance matrix
+    start_time = time.time()
+    calculator = RoadDistanceCalculator()
+    distance_matrix = calculator.calculate_distance_matrix(
+        input_df, filter_string="Visionary Ventures", flavor="osrm"
+    )
+    print(time.time()-start_time)
+
+
+
+
+
