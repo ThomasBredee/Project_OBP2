@@ -34,19 +34,29 @@ if fl is not None:
     st.write(f"Uploaded file: {fl.name}")
     #st.dataframe(df)  # Display the dataframe
 
-name = None
+
+#Create a unique identifier for each row grouped by the 'name'
+df['name'] = df.groupby('name').cumcount().add(1).astype(str).radd(df['name'] + "_")
+
+st.dataframe(df)
+
+
+
+
+selected_company = None
 
 st.sidebar.header("Choose your filter: ")
 filters = [None] + list(df["name"].unique())
-name = st.sidebar.selectbox("Pick your Company:", filters)
+selected_company = st.sidebar.selectbox("Pick your Company:", filters)
 
-if not name:
+if not selected_company:
     df2 = df.copy()
 else:
-    df2 = df[df["name"] == name]
+    df2 = df[df["name"] == selected_company]
 
-if name != None:
+if selected_company != None:
     st.dataframe(df2)
+
 
 
 
