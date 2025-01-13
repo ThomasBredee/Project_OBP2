@@ -19,6 +19,8 @@ st.markdown('<style>div.block-container{padding-top:2rem;}</style>',unsafe_allow
 # File uploader
 fl = st.file_uploader(":file_folder: Upload a file", type=(["csv", "txt", "xlsx", "xls"]))
 
+df = None
+
 if fl is not None:
     # Use the file-like object directly
     if fl.name.endswith('.csv'):
@@ -30,7 +32,23 @@ if fl is not None:
         st.stop()
 
     st.write(f"Uploaded file: {fl.name}")
-    st.dataframe(df)  # Display the dataframe
+    #st.dataframe(df)  # Display the dataframe
+
+name = None
+
+st.sidebar.header("Choose your filter: ")
+filters = [None] + list(df["name"].unique())
+name = st.sidebar.selectbox("Pick your Company:", filters)
+
+if not name:
+    df2 = df.copy()
+else:
+    df2 = df[df["name"] == name]
+
+if name != None:
+    st.dataframe(df2)
+
+
 
 
 
