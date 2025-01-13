@@ -13,7 +13,7 @@ if __name__ == "__main__":
     distance_matrix = calculator.calculate_distance_matrix(
         input_df, filter_string="Pioneer Networks", flavor="haversine"
     )
-    algorithms = Candidate_Rankings()
+    algorithms = Heuristics()
     algorithm1 = algorithms.greedy(distance_matrix)
 
     #print(time.time()-start_time)
