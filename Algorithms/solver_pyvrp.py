@@ -67,7 +67,7 @@ class VRPSolver ():
         route = [current_names[i] for i in solution.routes()[0].visits()]
         route.insert(0, current_names[0])  # Adding the depot at the start
         route.append(current_names[0])  # Adding the depot at the end
-        # print("Full route with depot:", route)
+        print("Full route with depot:", route)
 
         return solution, route
 
@@ -105,8 +105,8 @@ class VRPSolver ():
         route_len = 0
         for i in range(1, len(route)):
             route_len += distance_matrix.loc[route[i - 1], route[i]]
-        # self.plotRoute(route, input_df)
-        # print("Calculated route length: ", route_len)
-        # print("Solution route length: ", solution.distance_cost())
+        self.plotRoute(route, input_df)
+        print("Calculated route length: ", route_len)
+        print("Solution route length: ", solution.distance_cost())
         return route_len
 
