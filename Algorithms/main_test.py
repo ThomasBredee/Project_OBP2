@@ -11,6 +11,7 @@ import pandas as pd
 import time
 
 if __name__ == "__main__":
+
     input_df = pd.read_csv("Data/manyLarge.csv")
     # print(input_df.name.value_counts())
 
@@ -18,6 +19,7 @@ if __name__ == "__main__":
 
     filter_comp1 = "Innovative Ventures"
     filter_comp2 = "Global Enterprises"
+
     #Get Distance matrix
     start_time = time.time()
 
@@ -26,8 +28,10 @@ if __name__ == "__main__":
 
     calculator = RoadDistanceCalculator()
     distance_matrix = calculator.calculate_distance_matrix(
+
         input_df, filter_comp1=filter_comp1, filter_comp2=filter_comp2, flavor="haversine"
     )
+
 
     model, current_names = vrp_solver.buildModel(input_df, filter_comp1, filter_comp2, distance_matrix)
 
