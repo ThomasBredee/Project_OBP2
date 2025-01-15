@@ -4,8 +4,10 @@ import pandas as pd
 import time
 
 
+
+
 if __name__ == "__main__":
-    input_df = pd.read_csv("../Data/manyLarge.csv")
+    input_df = pd.read_csv("../Data/medium.csv")
 
     #Get Distance matrix
     start_time = time.time()
@@ -14,7 +16,9 @@ if __name__ == "__main__":
         input_df, filter_string="Pioneer Networks", flavor="haversine"
     )
     algorithms = Heuristics()
-    algorithm1 = algorithms.greedy(distance_matrix)
 
-    #print(time.time()-start_time)
+    #algorithm1 = algorithms.greedy(distance_matrix)
+    algorithm2 = algorithms.bounding_box(input_df, distance_matrix)
+    print(time.time()-start_time)
+
 
