@@ -1,41 +1,40 @@
+#########################################################
+#                                                       #
+# Created on: 14/01/2025                                #
+# Created by: Frank                                     #
+#                                                       #
+# Updated on: 14/01/2025                                #
+# Updated by: Dennis Botman                             #
+#                                                       #
+#########################################################
 import pandas as pd
 from pyvrp import Model
 from pyvrp.stop import MaxRuntime
 import matplotlib.pyplot as plt
-from Algorithms.distance_calculator import RoadDistanceCalculator
+import math
 
-class VRPSolver ():
-    def addDepot(self, input_df, depot_lat, depot_lon):
-        depot_row = {"name": "Depot", 'lat': depot_lat, 'lon': depot_lon}
-        return pd.concat([pd.DataFrame([depot_row]), input_df], ignore_index=True)
 
-    def getDistances(self, input_df, filter_comp1, filter_comp2):
-        calculator = RoadDistanceCalculator()
-        distance_matrix = calculator.calculate_distance_matrix(
-            input_df, filter_comp1=filter_comp1, filter_comp2=filter_comp2, flavor="haversine"
-        )
-        return distance_matrix
-
-    def buildModel(self, input_df, filter_comp1, filter_comp2, distance_matrix):
+class VRPSolver:
+    #Create model to solve VRP
+    def build_model(self, input_df, chosen_company, chosen_candidate, distance_matrix, truck_capacity):
         COORDS = []
         current_names = []
+        demands = []
 
-        # input_df = self.addDepot(input_df, depot_lat, depot_lon)
-        # distance_matrix = self.getDistances(input_df, filter_comp1, filter_comp2)
-        # print(distance_matrix)
         for name, lat, lon in zip(input_df.name, input_df.lat, input_df.lon):
-            if filter_comp1 in name or filter_comp2 in name or name == "Depot":
+            if chosen_company in name or chosen_candidate in name or name == "Depot":
                 COORDS.append((lat, lon))
                 current_names.append(name)
+                demands.append(1) #All locations assumed to have demand 1
 
+        total_demand = sum(demands) #Amount of locations
+        num_vehicles = max(1, math.ceil(total_demand / truck_capacity)) #Amount of needed trucks (ceil)
+
+        #Setup model
         m = Model()
-        m.add_vehicle_type(1, capacity=200)
+        m.add_vehicle_type(num_vehicles, capacity=truck_capacity)
         depot = m.add_depot(x=COORDS[0][0], y=COORDS[0][1], name=current_names[0])
-        clients = [
-            m.add_client(x=COORDS[idx][0], y=COORDS[idx][1], name=current_names[idx], delivery=1)
-            for idx in range(1, len(COORDS))
-        ]
-
+        clients = [m.add_client(x=COORDS[idx][0], y=COORDS[idx][1], name=current_names[idx], delivery=demands[idx]) for idx in range(1, len(COORDS))]
         locations = [depot] + clients
 
         added_edges = set()
@@ -44,69 +43,76 @@ class VRPSolver ():
                 if frm.name != to.name:
                     edge = (frm.name, to.name)
 
-                    # Check if the edge (or its reverse) has already been added
+                    #Check if the edge (or its reverse) has already been added
                     if edge not in added_edges and (to.name, frm.name) not in added_edges:
-                        # Get the distance
+                        #Get the distance from matrix
                         distance = distance_matrix.loc[frm.name, to.name]
                         if isinstance(distance, pd.Series):
                             distance = distance.iloc[0]
-                        # Add the edge to the set
+                        #Add the edge to the set
                         added_edges.add(edge)
-
                         added_edges.add((to.name, frm.name))
 
                         # Print or add the edge
                         m.add_edge(frm, to, distance=distance)
                         m.add_edge(to, frm, distance=distance)
+
         return m, current_names
 
     def solve(self, m, max_runtime, display, current_names):
-        res = m.solve(stop=MaxRuntime(max_runtime), display=display)  # one second
+        res = m.solve(stop=MaxRuntime(max_runtime), display=display)
 
         solution = res.best
-        route = [current_names[i] for i in solution.routes()[0].visits()]
-        route.insert(0, current_names[0])  # Adding the depot at the start
-        route.append(current_names[0])  # Adding the depot at the end
-        print("Full route with depot:", route)
+        routes = []
+        for vehicle_route in solution.routes():
+            route = [current_names[i] for i in vehicle_route.visits()]
+            route.insert(0, current_names[0])  # Adding the depot at the start
+            route.append(current_names[0])  # Adding the depot at the end
+            routes.append(route)
 
-        return solution, route
+        for idx, route in enumerate(routes):
+            print(f"Route for Vehicle {idx + 1}: {route}")
 
-    def plotRoute(self, route, input_df):
-        route_df = input_df[input_df['name'].isin(route)]
-        # Plot
-        plt.figure(figsize=(10, 8))
-        # Scatter plot for the locations
-        plt.scatter(route_df['lon'], route_df['lat'], color='blue', label='Other Locations', alpha=0.6, marker='o')
-        # Highlight the depot with a different marker
-        depot = route_df[route_df['name'] == 'Depot']
-        plt.scatter(depot['lon'], depot['lat'], color='red', label='Depot', alpha=1, marker='D', s=100)
+        return solution, routes
 
-        # Plot the optimal route
-        for i in range(1, len(route)):
-            start = route_df[route_df.name == route[i - 1]].iloc[0]
-            end = route_df[route_df.name == route[i]].iloc[0]
+    def plotRoute(self, routes, input_df):
+        plt.figure(figsize=(12, 8))
 
-            plt.arrow(start['lon'], start['lat'], end['lon'] - start['lon'], end['lat'] - start['lat'],
-                      head_width=0.025, head_length=0.025, fc='green', ec='green')
+        # Plot each route
+        for idx, route in enumerate(routes):
+            route_df = input_df[input_df['name'].isin(route)]
+            depot = route_df[route_df['name'] == 'Depot']
+            other_locations = route_df[route_df['name'] != 'Depot']
+
+            # Plot the depot
+            plt.scatter(depot['lon'], depot['lat'], color='red', label=f'Depot', alpha=1, marker='D', s=100)
+
+            # Plot other locations
+            plt.scatter(other_locations['lon'], other_locations['lat'], label=f'Route {idx + 1}', alpha=0.6, marker='o')
+
+            # Plot the route
+            for i in range(1, len(route)):
+                start = route_df[route_df.name == route[i - 1]].iloc[0]
+                end = route_df[route_df.name == route[i]].iloc[0]
+
+                plt.arrow(start['lon'], start['lat'], end['lon'] - start['lon'], end['lat'] - start['lat'],
+                          head_width=0.025, head_length=0.025, fc='green', ec='green', alpha=0.6)
 
         # Labels and Title
-        plt.title('Optimal Route with Locations and Depot', fontsize=16)
+        plt.title('Optimal Routes with Locations and Depot', fontsize=16)
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
-
-        # Show legend
         plt.legend()
-
-        # Show plot
         plt.grid(True)
         plt.show()
 
-    def validateRoute(self, solution, route, distance_matrix, input_df):
-        route_len = 0
-        for i in range(1, len(route)):
-            route_len += distance_matrix.loc[route[i - 1], route[i]]
-        self.plotRoute(route, input_df)
-        print("Calculated route length: ", route_len)
-        print("Solution route length: ", solution.distance_cost())
-        return route_len
+    def validateRoute(self, solution, routes, distance_matrix, input_df):
+        for idx, route in enumerate(routes):
+            route_len = 0
+            for i in range(1, len(route)):
+                route_len += distance_matrix.loc[route[i - 1], route[i]]
 
+            print(f"Route length for Vehicle {idx + 1}: {route_len}")
+
+        self.plotRoute(routes, input_df)
+        print("Solution route length: ", solution.distance_cost())

@@ -14,18 +14,20 @@ def createlookupdf(df):
 
 
 class Dashboard:
-    input_df = None
-    vehicle_capacity = 0
-    selected_company = ""
-    heuristics_choice = ""
 
-    execute_Ranking = False
-
-    company_candidates = list()
-    collaboration_company = ""
 
 
     def __init__(self):
+        self.input_df = None
+        self.vehicle_capacity = 0
+        self.selected_company = ""
+        self.heuristics_choice = ""
+
+        self.execute_Ranking = False
+
+        self.company_candidates = list()
+        self.collaboration_company = ""
+
         st.set_page_config(page_title = 'Collaboration Dashboard', page_icon = ":bar_chart", layout = 'wide')
         st.title(" :bar_chart: Collaboration Dashboard")
         st.markdown('<style>div.block-container{padding-top:2rem;}</style>',unsafe_allow_html=True)
@@ -62,8 +64,18 @@ class Dashboard:
             distance_choices = list(["haversine", "osrm (Docker Required)"])
             distance_choice = st.sidebar.selectbox("Pick your Distance:", distance_choices)
 
-            if st.sidebar.button("Get Ranking"):
-                self.execute_Ranking = True
+
+
+
+    def sidebarButton(self):
+        if st.sidebar.button("Get Ranking"):
+            self.execute_Ranking = True
+            return True
+        else:
+            return False
+
+    def printInput(self, input_df):
+        st.dataframe(input_df)
 
     def Ranking(self, ranking):
         st.write(ranking)

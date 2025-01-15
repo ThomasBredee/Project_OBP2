@@ -10,17 +10,21 @@ if __name__ == "__main__":
     euclidean_distance_matrix = None
     dashboard = Dashboard()
     algorithm = RoadDistanceCalculator()
+    heuristic = Heuristics()
 
-    if dashboard.input_df is not None:
-        euclidean_distance_matrix = algorithm.calculate_distance_matrix(dashboard.input_df)
+    dashboard.printInput(dashboard.input_df)
+
+    if dashboard.sidebarButton() and dashboard.input_df is not None:   # DIT ER NOG LATER IN VERWERKEN
         dashboard.Test()
 
-    if dashboard.execute_Ranking and euclidean_distance_matrix is not None:
-        heuristic = Heuristics()
+        euclidean_distance_matrix = algorithm.calculate_distance_matrix(dashboard.input_df)
+
+
+
         if dashboard.heuristics_choice == "greedy":
-            dashboard.Test()
-             #### MOET HIER DE DISTANCE MATRIX MEEGEGEVEN WORDEN? ####
             ranking = heuristic.greedy(euclidean_distance_matrix)
-        if dashboard.heuristics_choice == "boundingbox":
-            #### EN MOET HIER DAN DE DISTANCE MATRIX, EN DE INPUT_FILE MEEGEGEVEN WORDEN ####
+            dashboard.Test()
+        if dashboard.heuristics_choice == "bounding_box":
             ranking = heuristic.bounding_box(dashboard.input_df, euclidean_distance_matrix)
+
+
