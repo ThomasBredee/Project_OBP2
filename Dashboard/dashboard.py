@@ -62,11 +62,14 @@ class Dashboard:
             distance_choices = list(["haversine", "osrm (Docker Required)"])
             distance_choice = st.sidebar.selectbox("Pick your Distance:", distance_choices)
 
-            if st.sidebar.button("Execute"):
-                self.execute = True
+            if st.sidebar.button("Get Ranking"):
+                self.execute_Ranking = True
 
-    def execute(self):
-        st.write("Executing Dashboard")
+    def Ranking(self, ranking):
+        st.write(ranking)
+
+    def Test(self):
+        st.write("Test")
 
     def showMap(self, df, route):
         """
@@ -125,14 +128,14 @@ class Dashboard:
 
 
 # Create a Dashboard instance and show the map
-dashboard = Dashboard()
+#dashboard = Dashboard()
 
-if dashboard.execute_Ranking:
-    heuristic = Ranking()
-    if dashboard.heuristics_choice == "greedy":
-        ranking = heuristic.greedy()
-    if dashboard.heuristics_choice == "boundingbox":
-        ranking = heuristic.boundingbox()
+#if dashboard.execute_Ranking:
+#    heuristic = Ranking()
+ #   if dashboard.heuristics_choice == "greedy":
+  #      ranking = heuristic.greedy()
+   # if dashboard.heuristics_choice == "boundingbox":
+    #    ranking = heuristic.boundingbox()
 
 #dashboard.showMap(df, route)
 
