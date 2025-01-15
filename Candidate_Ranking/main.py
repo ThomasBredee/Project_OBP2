@@ -1,11 +1,11 @@
-from Heuristics.Rankings import Heuristics
+from Candidate_Ranking.Rankings import Heuristics
 from Algorithms.distance_calculator import RoadDistanceCalculator
 import pandas as pd
 import time
 
 
 if __name__ == "__main__":
-    input_df = pd.read_csv("../Data/manyLarge.csv")
+    input_df = pd.read_csv("Data/mini.csv")
 
     #Get Distance matrix
     start_time = time.time()
