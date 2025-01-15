@@ -14,7 +14,16 @@ def createlookupdf(df):
 
 
 class Dashboard:
-    df = None
+    input_df = None
+    vehicle_capacity = 0
+    selected_company = ""
+    heuristics_choice = ""
+
+    execute_Ranking = False
+
+    company_candidates = list()
+    collaboration_company = ""
+
 
     def __init__(self):
         st.set_page_config(page_title = 'Collaboration Dashboard', page_icon = ":bar_chart", layout = 'wide')
@@ -24,31 +33,40 @@ class Dashboard:
         # File uploader
         fl = st.file_uploader(":file_folder: Upload a file", type=(["csv", "txt", "xlsx", "xls"]))
         if fl is not None:
-            # Use the file-like object directly
             if fl.name.endswith('.csv'):
-                df = pd.read_csv(fl, encoding="ISO-8859-1")
+                input_df = pd.read_csv(fl, encoding="ISO-8859-1")
             elif fl.name.endswith(('.xlsx', '.xls')):
-                df = pd.read_excel(fl, engine='openpyxl')
+                input_df = pd.read_excel(fl, engine='openpyxl')
             else:
                 st.error("Unsupported file type!")
                 st.stop()
             st.write(f"Uploaded file: {fl.name}")
-
-            self.df = None
-
-            selected_company = None
+            st.dataframe(input_df)
 
             st.sidebar.header("Choose your filter: ")
-            filters = [None] + list(df["name"].unique())
+
+            #Company choice
+            filters =list(input_df["name"].unique())
             selected_company = st.sidebar.selectbox("Pick your Company:", filters)
 
-            if not selected_company:
-                df2 = df.copy()
-            else:
-                df2 = df[df["name"] == selected_company]
+            #Vehicle capacity (max vehicle capacity is based on the biggest company (having 1 truck for the biggest company's delivery))
+            max_locations = input_df["name"].value_counts().max()
+            vehicle_range = range(1,max_locations+1)
+            vehicle_capacity = st.sidebar.selectbox("Pick your Capacity:", list(vehicle_range))
 
-            if selected_company != None:
-                st.dataframe(df2)
+            #Choice of Heuristic (Greedy)
+            heuristics = list(["greedy", "boundingbox"])
+            heuristics_choice = st.sidebar.selectbox("Pick your Heuristic:", heuristics)
+
+            #Choice of Distance (haversine, osrm) FOR NOW ONLY CHOOSE HAVERSINE
+            distance_choices = list(["haversine", "osrm (Docker Required)"])
+            distance_choice = st.sidebar.selectbox("Pick your Distance:", distance_choices)
+
+            if st.sidebar.button("Execute"):
+                self.execute = True
+
+    def execute(self):
+        st.write("Executing Dashboard")
 
     def showMap(self, df, route):
         """
@@ -105,34 +123,18 @@ class Dashboard:
         # Display the map using Streamlit
         st_folium(m, width=800, height=600)
 
-data = {
-        "name": [
-            "Pioneer Networks_1", "Pioneer Networks_2", "Pioneer Networks_3",
-            "Pioneer Networks_4", "Pioneer Networks_5",
-            "NextGen Technologies_1", "NextGen Technologies_2",
-            "NextGen Technologies_3", "NextGen Technologies_4",
-            "NextGen Technologies_5"
-        ],
-        "lat": [
-            52.141899, 53.334869, 52.692184, 52.50573, 51.947071,
-            52.897564, 52.322636, 52.074196, 53.173977, 52.1436
-        ],
-        "lon": [
-            5.583035, 6.516187, 5.056780000000001, 4.98528, 6.02425,
-            5.583602, 4.972053, 5.095043, 6.208481, 5.045227
-        ]
-    }
-df = pd.DataFrame(data)
 
-    # Example shortest route
-route = [
-        "Pioneer Networks_1", "Pioneer Networks_3", "NextGen Technologies_1",
-        "NextGen Technologies_5", "Pioneer Networks_5", "Pioneer Networks_2"
-    ]
-
-    # Create a Dashboard instance and show the map
+# Create a Dashboard instance and show the map
 dashboard = Dashboard()
-dashboard.showMap(df, route)
+
+if dashboard.execute_Ranking:
+    heuristic = Ranking()
+    if dashboard.heuristics_choice == "greedy":
+        ranking = heuristic.greedy()
+    if dashboard.heuristics_choice == "boundingbox":
+        ranking = heuristic.boundingbox()
+
+#dashboard.showMap(df, route)
 
 
 
