@@ -16,7 +16,9 @@ if __name__ == "__main__":
         input_df, filter_string="Pioneer Networks", flavor="haversine"
     )
     algorithms = Heuristics()
+
     #algorithm1 = algorithms.greedy(distance_matrix)
     algorithm2 = algorithms.bounding_box(input_df, distance_matrix)
     print(time.time()-start_time)
+
 

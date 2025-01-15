@@ -44,21 +44,26 @@ class RoadDistanceCalculator:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
 
-    def calculate_distance_matrix(self, points, filter_string=None, flavor="osrm"):
+    def calculate_distance_matrix(self, points, filter_comp1=None, filter_comp2=None, flavor="haversine"):
         """
         Calculate a distance matrix for a filtered list of points.
 
         Args:
             points (pd.DataFrame): A DataFrame containing 'name', 'lat', and 'lon' columns.
-            filter_string (str): A substring to filter rows by company name.
+            filter_comp1 (str): A substring to filter rows by company name.
+            filter_corp2 (str): A substring to filter rows by company name.
             flavor (str): The method to calculate distances ('osrm' or 'haversine').
 
         Returns:
             pd.DataFrame: A DataFrame with distances between all filtered rows and all columns.
         """
         # Filter rows based on the substring
-        if filter_string:
-            filtered_points = points[points["name"].str.contains(filter_string, case=False)]
+        if filter_comp1:
+            # filtered_points = points[points["name"].str.contains(filter_string, case=False)]
+            filtered_points = points[
+                points["name"].str.contains(filter_comp1, case=False, na=False) |
+                points["name"].str.contains("Depot", case=False, na=False) |
+                points["name"].str.contains(filter_comp2, case=False, na=False)]
         else:
             filtered_points = points
 
@@ -66,9 +71,9 @@ class RoadDistanceCalculator:
         row_lats = filtered_points["lat"].tolist()
         row_lons = filtered_points["lon"].tolist()
 
-        column_names = points["name"].tolist()
-        column_lats = points["lat"].tolist()
-        column_lons = points["lon"].tolist()
+        column_names = filtered_points["name"].tolist()
+        column_lats = filtered_points["lat"].tolist()
+        column_lons = filtered_points["lon"].tolist()
 
         # Initialize the matrix
         matrix = pd.DataFrame(index=row_names, columns=column_names, dtype=float)
