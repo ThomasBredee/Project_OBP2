@@ -52,3 +52,4 @@ if __name__ == "__main__":
             solution, route = vrp_solver.solve(model, max_runtime=1, display=False, current_names=current_names)
             print(solution)
             dashboard.Test()
+            #TEST
