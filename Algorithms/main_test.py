@@ -28,7 +28,7 @@ if __name__ == "__main__":
     ###get distance matrix for chosen company
     distance_calc = RoadDistanceCalculator()
     distance_matrix_ranking = distance_calc.calculate_distance_matrix(input_df, chosen_company=CHOSEN_COMPANY,
-        candidate_name=None, method="osrm", computed_distances_df=None)
+        candidate_name=None, method="haversine", computed_distances_df=None)
 
     ###get candidate ranking
     ranking = CandidateRanking()
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     ###get the full distance matrix of best company
     input_df = distance_calc.add_depot(input_df, LAT_DEPOT, LONG_DEPOT)
     distance_matrix_vrp= distance_calc.calculate_distance_matrix(input_df, chosen_company=CHOSEN_COMPANY,
-        candidate_name=CHOSEN_CANDIDATE, method="osrm", computed_distances_df=distance_matrix_ranking)
+        candidate_name=CHOSEN_CANDIDATE, method="haversine", computed_distances_df=distance_matrix_ranking)
 
     ###get best route
     vrp_solver = VRPSolver()

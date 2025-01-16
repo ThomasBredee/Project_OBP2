@@ -80,4 +80,3 @@ class Dashboard:
     def Test(self):
         st.write("Test")
 
-#TEST
