@@ -14,6 +14,7 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 
 
+
 class RoadDistanceCalculator:
     def __init__(self, osrm_url="http://localhost:5000"):
         self.osrm_url = osrm_url
@@ -27,18 +28,18 @@ class RoadDistanceCalculator:
         response = self.session.get(url, params=params)
         if response.status_code == 200:
             data = response.json()
-            return data["routes"][0]["distance"] / 1000  #Set to KM's
+            return data["routes"][0]["distance"] / 1000  # Convert to kilometers
         else:
             response.raise_for_status()
 
     def _calculate_distance_haversine(self, start, end):
         """Calculate the Haversine distance between two points (using haversine formula)"""
 
-        r = 6371  #radius of the sphere (earth)
+        r = 6371  # Radius of the Earth in kilometers
         lat1, lon1 = start
         lat2, lon2 = end
         dlat = math.radians(lat2 - lat1)
-        dlon = math.radians(lat2 - lon1)
+        dlon = math.radians(lon2 - lon1)
         a = (
             math.sin(dlat / 2) ** 2
             + math.cos(math.radians(lat1))
@@ -84,7 +85,10 @@ class RoadDistanceCalculator:
             ]
 
             def calculate_pair(pair):
-                start, end = pair
+                (start_lat, start_lon), (end_lat, end_lon) = pair
+                start = (start_lat, start_lon)
+                end = (end_lat, end_lon)
+
                 if method == "osrm":
                     return self._calculate_distance_osrm(start, end)
                 elif method == "haversine":
@@ -141,3 +145,4 @@ class RoadDistanceCalculator:
     def add_depot(self, input_df, depot_lat, depot_lon):
         depot_row = {"name": "Depot", 'lat': depot_lat, 'lon': depot_lon}
         return pd.concat([pd.DataFrame([depot_row]), input_df], ignore_index=True)
+
