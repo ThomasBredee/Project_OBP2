@@ -1,11 +1,13 @@
-#########################################################
+########################################################
 #                                                       #
-# Created on: 11/01/2024                                #
+# Created on: 11/01/2025                                #
 # Created by: Dennis Botman                             #
+#                                                       #
+# Updated on: 16/01/2025                                #
+# Updated by: Dennis Botman                             #
 #                                                       #
 #########################################################
 
-#TEST
 
 from Algorithms.distance_calculator import RoadDistanceCalculator
 from Algorithms.solver_pyvrp import VRPSolver
@@ -16,16 +18,16 @@ import time
 
 
 #######INPUTS FROM THE MODEL VARIABLES
-TRUCK_CAPACITY =  10
-CHOSEN_COMPANY = "Innovative Consulting"
-CHOSEN_CANDIDATE = "NextGen Networks"
+TRUCK_CAPACITY =  2
+CHOSEN_COMPANY = "Pioneer Networks"
+CHOSEN_CANDIDATE = "Global Group"
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 
 if __name__ == "__main__":
 
     ###get the data
-    input_df = pd.read_csv("Data/many.csv")
+    input_df = pd.read_csv("Data/mini.csv")
     input_df['name'] = input_df.groupby('name').cumcount().add(1).astype(str).radd(input_df['name'] + "_")
 
     ###get distance matrix for chosen company
@@ -103,7 +105,7 @@ if __name__ == "__main__":
         f"Single Company: Total Distance = {total_distance_single}, Avg Distance per Order = {avg_distance_per_order_single}")
     print(
         f"Collaboration: Total Distance = {total_distance_collab}, Avg Distance per Order = {avg_distance_per_order_collab}")
-    print(f"Expected Gain: {expected_gain} km/order")
+    print(f"Gain: {-expected_gain} km")
 
 
 

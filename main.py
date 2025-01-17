@@ -1,3 +1,10 @@
+#########################################################
+#                                                       #
+# Created on: 15/01/2025                                #
+# Created by: Thomas                                    #
+#                                                       #
+#########################################################
+
 from Algorithms.distance_calculator import RoadDistanceCalculator
 from Dashboard.dashboard import Dashboard
 from Candidate_Ranking.Rankings import CandidateRanking
