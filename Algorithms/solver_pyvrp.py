@@ -77,8 +77,8 @@ class VRPSolver:
             route.append(current_names[0])  # Adding the depot at the end
             routes.append(route)
 
-        for idx, route in enumerate(routes):
-            print(f"Route for Vehicle {idx + 1}: {route}")
+        #for idx, route in enumerate(routes):
+           # print(f"Route for Vehicle {idx + 1}: {route}")
 
         return solution, routes
 
@@ -93,7 +93,7 @@ class VRPSolver:
             total_orders += len(route) - 2  # Exclude depot at start and end
 
         distance_per_order = total_distance / total_orders if total_orders > 0 else 0
-        print(f"Total Distance: {total_distance}, Total Orders: {total_orders}, Distance per Order: {distance_per_order}")
+        #print(f"Total Distance: {total_distance}, Total Orders: {total_orders}, Distance per Order: {distance_per_order}")
         return total_distance, distance_per_order
 
     def plotRoute(self, routes, input_df):

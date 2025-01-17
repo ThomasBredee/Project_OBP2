@@ -31,7 +31,7 @@ class CandidateRanking:
         ranking = grouped_df.sum(axis=0).sort_values(ascending=True).to_frame()
         ranking.columns = ['Total Distance']
         ranking = round(ranking, 0)
-        print(ranking)
+        #print(ranking)
         return ranking
 
     def bounding_box(self, df, matrix):

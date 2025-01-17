@@ -8,6 +8,7 @@ warnings.filterwarnings('ignore')
 
 class Dashboard:
     def __init__(self):
+        print("Initializing Dashboard")
         st.set_page_config(page_title='Collaboration Dashboard', page_icon=":bar_chart", layout='wide')
         st.title(" :bar_chart: Collaboration Dashboard")
         st.markdown('<style>div.block-container{padding-top:2rem;}</style>', unsafe_allow_html=True)
@@ -85,19 +86,24 @@ class Dashboard:
         # Extract base company names (before the last underscore)
         def get_base_name(name):
             if "_" in name:
-                return "".join(name.split("")[:-1])
+                return "_".join(name.split("_")[:-1])
             return name
 
         df_input['base_name'] = df_input['name'].apply(get_base_name)
 
         # Map each base company name to a unique color
         unique_companies = df_input['base_name'].unique()
-        company_colors = ["blue", "green", "red", "purple", "orange", "darkred", "lightred"]
+        company_colors = ["blue", "green", "red", ]
         company_color_map = {company: company_colors[i % len(company_colors)] for i, company in
                              enumerate(unique_companies)}
 
         # Assign unique colors for each truck's route
-        truck_colors = ["darkblue", "darkgreen", "darkorange", "darkpurple", "black"]
+        truck_colors = [
+            "darkblue", "darkgreen", "darkorange", "lightred", "darkpurple", "black",
+            "blue", "purple", "orange", "darkred",
+            "cyan", "magenta", "lime", "brown", "pink", "teal",
+            "gold", "silver", "darkcyan", "indigo"
+        ]
         route_colors = [truck_colors[i % len(truck_colors)] for i in range(len(route_input))]
 
         # Create a folium map centered on the depot of the first route
@@ -113,7 +119,7 @@ class Dashboard:
         #    st.error("Depot not found in the input DataFrame.")
         #    return
 
-        route_map = folium.Map(location=depot_coords, zoom_start=12)
+        route_map = folium.Map(location=depot_coords, zoom_start=8)
 
         # Process each truck's route
         for idx, truck_route in enumerate(route_input):
