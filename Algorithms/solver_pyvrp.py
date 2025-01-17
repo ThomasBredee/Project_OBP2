@@ -16,22 +16,28 @@ import math
 #TEST
 
 class VRPSolver:
-    #Create model to solve VRP
-    def build_model(self, input_df, chosen_company, chosen_candidate, distance_matrix, truck_capacity):
+    # Create model to solve VRP
+    def build_model(self, input_df, chosen_company, chosen_candidate=None, distance_matrix=None, truck_capacity=10):
         COORDS = []
         current_names = []
         demands = []
 
         for name, lat, lon in zip(input_df.name, input_df.lat, input_df.lon):
-            if chosen_company in name or chosen_candidate in name or name == "Depot":
-                COORDS.append((lat, lon))
-                current_names.append(name)
-                demands.append(1) #All locations assumed to have demand 1
+            if chosen_candidate:  # Collaborative VRP
+                if chosen_company in name or chosen_candidate in name or name == "Depot":
+                    COORDS.append((lat, lon))
+                    current_names.append(name)
+                    demands.append(1)  # All locations assumed to have demand 1
+            else:  # Single Company VRP
+                if chosen_company in name or name == "Depot":
+                    COORDS.append((lat, lon))
+                    current_names.append(name)
+                    demands.append(1)  # All locations assumed to have demand 1
 
-        total_demand = sum(demands) #Amount of locations
-        num_vehicles = max(1, math.ceil(total_demand / truck_capacity)) #Amount of needed trucks (ceil)
+        total_demand = sum(demands)  # Amount of locations
+        num_vehicles = max(1, math.ceil(total_demand / truck_capacity))  # Amount of needed trucks (ceil)
 
-        #Setup model
+        # Setup model
         m = Model()
         m.add_vehicle_type(num_vehicles, capacity=truck_capacity)
         depot = m.add_depot(x=COORDS[0][0], y=COORDS[0][1], name=current_names[0])
@@ -44,17 +50,17 @@ class VRPSolver:
                 if frm.name != to.name:
                     edge = (frm.name, to.name)
 
-                    #Check if the edge (or its reverse) has already been added
+                    # Check if the edge (or its reverse) has already been added
                     if edge not in added_edges and (to.name, frm.name) not in added_edges:
-                        #Get the distance from matrix
+                        # Get the distance from matrix
                         distance = distance_matrix.loc[frm.name, to.name]
                         if isinstance(distance, pd.Series):
                             distance = distance.iloc[0]
-                        #Add the edge to the set
+                        # Add the edge to the set
                         added_edges.add(edge)
                         added_edges.add((to.name, frm.name))
 
-                        # Print or add the edge
+                        # Add the edge
                         m.add_edge(frm, to, distance=distance)
                         m.add_edge(to, frm, distance=distance)
 
@@ -75,6 +81,20 @@ class VRPSolver:
             print(f"Route for Vehicle {idx + 1}: {route}")
 
         return solution, routes
+
+    def calculate_distance_per_order(self, routes, distance_matrix):
+        total_distance = 0
+        total_orders = 0
+        for route in routes:
+            route_distance = 0
+            for i in range(len(route) - 1):
+                route_distance += distance_matrix.loc[route[i], route[i + 1]]
+            total_distance += route_distance
+            total_orders += len(route) - 2  # Exclude depot at start and end
+
+        distance_per_order = total_distance / total_orders if total_orders > 0 else 0
+        print(f"Total Distance: {total_distance}, Total Orders: {total_orders}, Distance per Order: {distance_per_order}")
+        return total_distance, distance_per_order
 
     def plotRoute(self, routes, input_df):
         plt.figure(figsize=(12, 8))
@@ -107,13 +127,3 @@ class VRPSolver:
         plt.grid(True)
         plt.show()
 
-    def validateRoute(self, solution, routes, distance_matrix, input_df):
-        for idx, route in enumerate(routes):
-            route_len = 0
-            for i in range(1, len(route)):
-                route_len += distance_matrix.loc[route[i - 1], route[i]]
-
-            print(f"Route length for Vehicle {idx + 1}: {route_len}")
-
-        self.plotRoute(routes, input_df)
-        print("Solution route length: ", solution.distance_cost())
