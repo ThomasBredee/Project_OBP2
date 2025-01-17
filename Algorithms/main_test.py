@@ -5,6 +5,8 @@
 #                                                       #
 #########################################################
 
+#TEST
+
 from Algorithms.distance_calculator import RoadDistanceCalculator
 from Algorithms.solver_pyvrp import VRPSolver
 from Candidate_Ranking.Rankings import CandidateRanking

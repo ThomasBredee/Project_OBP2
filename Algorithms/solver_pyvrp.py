@@ -13,6 +13,7 @@ from pyvrp.stop import MaxRuntime
 import matplotlib.pyplot as plt
 import math
 
+#TEST
 
 class VRPSolver:
     # Create model to solve VRP
