@@ -1,3 +1,10 @@
+#########################################################
+#                                                       #
+# Created on: 15/01/2025                                #
+# Created by: Lukas and Wester                          #
+#                                                       #
+#########################################################
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

@@ -1,3 +1,11 @@
+#########################################################
+#                                                       #
+# Created on: 15/01/2025                                #
+# Created by: Lukas and Wester                          #
+#                                                       #
+#                                                       #
+#########################################################
+
 from Candidate_Ranking.Rankings import CandidateRanking
 from Algorithms.distance_calculator import RoadDistanceCalculator
 import pandas as pd
