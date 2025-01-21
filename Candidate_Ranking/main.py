@@ -13,8 +13,8 @@ import time
 
 
 if __name__ == "__main__":
-    input_df = pd.read_csv("../Data/manyLarge.csv")
-    CHOSEN_COMPANY = "Dynamic Industries"
+    input_df = pd.read_csv("Data/mini.csv")
+    CHOSEN_COMPANY = "Pioneer Networks"
     #Get Distance matrix
     start_time = time.time()
     calculator = RoadDistanceCalculator()
@@ -23,5 +23,5 @@ if __name__ == "__main__":
         candidate_name=None, method="haversine", computed_distances_df=None)
     algorithms = CandidateRanking()
     #algorithm1 = algorithms.greedy(distance_matrix)
-    #algorithm2 = algorithms.bounding_box(input_df,distance_matrix)
-    algorithm3 = algorithms.k_means(input_df,distance_matrix)
+    algorithm2 = algorithms.bounding_box(input_df,distance_matrix)
+    # algorithm3 = algorithms.k_means(input_df, distance_matrix)

@@ -18,16 +18,16 @@ import time
 
 
 #######INPUTS FROM THE MODEL VARIABLES
-TRUCK_CAPACITY =  2
-CHOSEN_COMPANY = "Pioneer Networks"
-CHOSEN_CANDIDATE = "Global Group"
+TRUCK_CAPACITY =  4
+CHOSEN_COMPANY = "Dynamic Networks"
+CHOSEN_CANDIDATE = "Global Enterprises"
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 
 if __name__ == "__main__":
 
     ###get the data
-    input_df = pd.read_csv("Data/mini.csv")
+    input_df = pd.read_csv("Data/manyLarge.csv")
     input_df['name'] = input_df.groupby('name').cumcount().add(1).astype(str).radd(input_df['name'] + "_")
 
     ###get distance matrix for chosen company
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     vrp_solver = VRPSolver()
 
     # --- Single Company ---
-    print("Solving VRP for Single Company...")
+    # print("Solving VRP for Single Company...")
     model_single, current_names_single = vrp_solver.build_model(
         input_df=input_df,
         chosen_company=CHOSEN_COMPANY,
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     )
     solution_single, routes_single = vrp_solver.solve(
         m=model_single,
-        max_runtime=2,
+        max_runtime=0.5,
         display=False,
         current_names=current_names_single
     )
@@ -67,10 +67,10 @@ if __name__ == "__main__":
         routes=routes_single,
         distance_matrix=distance_matrix_vrp
     )
-    vrp_solver.plotRoute(routes_single, input_df)
+    # vrp_solver.plotRoute(routes_single, input_df)
 
     # --- Collaboration ---
-    print("Solving VRP for Collaboration...")
+    # print("Solving VRP for Collaboration...")
     model_collab, current_names_collab = vrp_solver.build_model(
         input_df=input_df,
         chosen_company=CHOSEN_COMPANY,
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     )
     solution_collab, routes_collab = vrp_solver.solve(
         m=model_collab,
-        max_runtime=2,
+        max_runtime=0.5,
         display=False,
         current_names=current_names_collab
     )
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     vrp_solver.plotRoute(routes_collab, input_df)
 
     # --- Evaluation ---
-    print("Evaluating Expected Gain...")
+    # print("Evaluating Expected Gain...")
     algorithm_eval = AlgorithmEvaluation()
     expected_gain = algorithm_eval.evaluate_expected_gain(
         total_distance_single=total_distance_single,
@@ -100,11 +100,15 @@ if __name__ == "__main__":
     )
 
     # Print final summary
-    print("\nSummary:")
+    print("\nSummary: cap = ", TRUCK_CAPACITY)
+
     print(
         f"Single Company: Total Distance = {total_distance_single}, Avg Distance per Order = {avg_distance_per_order_single}")
+    print("n vehicles: ", len(routes_single))
+
     print(
         f"Collaboration: Total Distance = {total_distance_collab}, Avg Distance per Order = {avg_distance_per_order_collab}")
+    print("n vehicles: ", len(routes_collab))
     print(f"Gain: {-expected_gain} km")
 
 

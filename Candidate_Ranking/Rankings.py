@@ -99,8 +99,8 @@ class CandidateRanking:
         count_inside = count_inside.sort_values(by=['Percentage'], ascending=False).reset_index(drop=True)
         print(count_inside)
 
-    def k_means(self,df,matrix):
-        print(matrix)
+    def k_means(self, df,matrix):
+        # print(matrix)
         chosen_company = matrix.index[0]
         minimal_clusters = len(df[df['name'] == chosen_company])
         print('m',minimal_clusters)
@@ -118,7 +118,7 @@ class CandidateRanking:
 
         print('s',sil_scores)
         print(np.max(sil_scores))
-        print(np.argmax(sil_scores))
+        print("test", np.argmax(sil_scores))
 
         k = minimal_clusters + np.argmax(sil_scores)
         kmeans = KMeans(n_clusters=k, random_state=42)

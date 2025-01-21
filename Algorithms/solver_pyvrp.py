@@ -39,7 +39,7 @@ class VRPSolver:
 
         # Setup model
         m = Model()
-        m.add_vehicle_type(num_vehicles, capacity=truck_capacity)
+        m.add_vehicle_type(num_vehicles, capacity=truck_capacity, fixed_cost=0, unit_distance_cost=1)
         depot = m.add_depot(x=COORDS[0][0], y=COORDS[0][1], name=current_names[0])
         clients = [m.add_client(x=COORDS[idx][0], y=COORDS[idx][1], name=current_names[idx], delivery=demands[idx]) for idx in range(1, len(COORDS))]
         locations = [depot] + clients
@@ -67,9 +67,10 @@ class VRPSolver:
         return m, current_names
 
     def solve(self, m, max_runtime, display, current_names):
-        res = m.solve(stop=MaxRuntime(max_runtime), display=display)
+        res = m.solve(stop=MaxRuntime(max_runtime), seed = 10, display=display)
 
         solution = res.best
+
         routes = []
         for vehicle_route in solution.routes():
             route = [current_names[i] for i in vehicle_route.visits()]
@@ -77,8 +78,8 @@ class VRPSolver:
             route.append(current_names[0])  # Adding the depot at the end
             routes.append(route)
 
-        #for idx, route in enumerate(routes):
-           # print(f"Route for Vehicle {idx + 1}: {route}")
+        for idx, route in enumerate(routes):
+           print(f"Route for Vehicle {idx + 1}: {route}")
 
         return solution, routes
 
@@ -93,11 +94,18 @@ class VRPSolver:
             total_orders += len(route) - 2  # Exclude depot at start and end
 
         distance_per_order = total_distance / total_orders if total_orders > 0 else 0
-        #print(f"Total Distance: {total_distance}, Total Orders: {total_orders}, Distance per Order: {distance_per_order}")
+        print(f"Total Distance: {total_distance}, Total Orders: {total_orders}, Distance per Order: {distance_per_order}")
         return total_distance, distance_per_order
 
     def plotRoute(self, routes, input_df):
         plt.figure(figsize=(12, 8))
+
+        truck_colors = [
+            "black", "darkblue", "darkgreen", "darkorange", "black",
+            "blue", "purple", "orange", "darkred",
+            "cyan", "magenta", "lime", "brown", "pink", "teal",
+            "gold", "silver", "darkcyan", "indigo"
+        ]
 
         # Plot each route
         for idx, route in enumerate(routes):
@@ -105,11 +113,9 @@ class VRPSolver:
             depot = route_df[route_df['name'] == 'Depot']
             other_locations = route_df[route_df['name'] != 'Depot']
 
-            # Plot the depot
-            plt.scatter(depot['lon'], depot['lat'], color='red', label=f'Depot', alpha=1, marker='D', s=100)
-
             # Plot other locations
-            plt.scatter(other_locations['lon'], other_locations['lat'], label=f'Route {idx + 1}', alpha=0.6, marker='o')
+            plt.scatter(other_locations['lon'], other_locations['lat'], label=f'Route {idx + 1}',
+                        alpha=0.6, marker='o', color = truck_colors[idx + 1])
 
             # Plot the route
             for i in range(1, len(route)):
@@ -117,7 +123,10 @@ class VRPSolver:
                 end = route_df[route_df.name == route[i]].iloc[0]
 
                 plt.arrow(start['lon'], start['lat'], end['lon'] - start['lon'], end['lat'] - start['lat'],
-                          head_width=0.025, head_length=0.025, fc='green', ec='green', alpha=0.6)
+                          head_width=0.025, head_length=0.025, fc=truck_colors[idx + 1], ec=truck_colors[idx + 1], alpha=0.6)
+
+        # Plot the depot
+        plt.scatter(depot['lon'], depot['lat'], color='red', label=f'Depot', alpha=1, marker='D', s=100)
 
         # Labels and Title
         plt.title('Optimal Routes with Locations and Depot', fontsize=16)
