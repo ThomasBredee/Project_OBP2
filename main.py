@@ -60,3 +60,4 @@ if __name__ == "__main__":
         solution, route = vrp_solver.solve(model, max_runtime=1, display=False, current_names=current_names)
         st.write("### VRP Solution")
         st.write(solution)
+        dashboard.showmap(route, input_df)

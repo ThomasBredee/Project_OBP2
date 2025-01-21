@@ -25,9 +25,6 @@ class CandidateRanking:
         matrix_copy.index = [idx.split('_')[0] for idx in matrix_copy.index]
         return matrix_copy
 
-    def euclidean_distance(self, lat1, lon1, lat2, lon2):
-        return np.sqrt((lat2 - lat1)** 2 + (lon2 - lon1)** 2)
-
     def greedy(self, matrix):
         # Clean column names and index
         matrix_new = self._clean_column_and_index_labels(matrix)
@@ -37,8 +34,6 @@ class CandidateRanking:
         grouped_df = grouped_df.drop(columns=company_name)
         ranking = grouped_df.sum(axis=0).sort_values(ascending=True).to_frame()
         ranking.columns = ['Total Distance']
-        ranking = round(ranking, 0)
-        print(ranking)
         return ranking
 
     def bounding_box(self, df, matrix):

@@ -19,4 +19,4 @@ docker build -t osrm-netherlands .
 
 # Run the OSRM server (container)
 echo "Starting the OSRM server on port 5000 ......"
-docker run -p 5000:5000 osrm-netherlands
+docker run -m 8g --cpus=4 -d -p 5000:5000 osrm-netherlands

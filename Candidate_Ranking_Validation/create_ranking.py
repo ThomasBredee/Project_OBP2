@@ -1,10 +1,7 @@
 ########################################################
 #                                                       #
-# Created on: 11/01/2025                                #
+# Created on: 17/01/2025                                #
 # Created by: Dennis Botman                             #
-#                                                       #
-# Updated on: 16/01/2025                                #
-# Updated by: Dennis Botman                             #
 #                                                       #
 #########################################################
 
@@ -27,8 +24,8 @@ LAT_DEPOT = 52.2517788
 if __name__ == "__main__":
 
     # Load data
-    input_df = pd.read_csv("Data/mini.csv")
-    input_df_orig = pd.read_csv("Data/mini.csv")
+    input_df = pd.read_csv("Data/medium.csv")
+    input_df_orig = pd.read_csv("Data/medium.csv")
     input_df['name'] = input_df.groupby('name').cumcount().add(1).astype(str).radd(input_df['name'] + "_")
     print(input_df_orig['name'].unique())
 
@@ -37,7 +34,7 @@ if __name__ == "__main__":
     input_df_for_ranking = distance_calc.add_depot(input_df, LAT_DEPOT, LONG_DEPOT)
 
     # Iterate over truck capacities
-    for truck_cap in [2, 4, 6, 8, 10]:
+    for truck_cap in [2,3,4,5,6,7,8,9,10,11,12]:
         print(f"Processing for truck capacity: {truck_cap}")
 
         # Initialize DataFrame to store average distances for this truck capacity
@@ -83,7 +80,7 @@ if __name__ == "__main__":
 
                 solution_collab, routes_collab = vrp_solver.solve(
                     m=model_collab,
-                    max_runtime=4,
+                    max_runtime=2,
                     display=False,
                     current_names=current_names_collab
                 )
@@ -118,7 +115,7 @@ if __name__ == "__main__":
             )
 
         # Save results for this truck capacity to an Excel file
-        file_name = f"ranking_results_truck_cap_{truck_cap}.xlsx"
+        file_name = f"ranking_results_truck_cap_{truck_cap}_haversine_medium.xlsx"
         with pd.ExcelWriter(file_name) as writer:
             solutions_df.to_excel(writer, sheet_name='Solutions (Avg Distances)')
             ranks_df.to_excel(writer, sheet_name='Ranks')

@@ -12,25 +12,32 @@ import pandas as pd
 import requests
 import math
 from concurrent.futures import ThreadPoolExecutor
-
-
+import time
 
 class RoadDistanceCalculator:
     def __init__(self, osrm_url="http://localhost:5000"):
         self.osrm_url = osrm_url
         self.session = requests.Session()
 
-    def _calculate_distance_osrm(self, start, end):
-        """Calculate the road distance between two points using the OSRM local server"""
+    def _calculate_distance_osrm(self, start, end, retries=5, backoff_factor=3):
+        """Calculate road distance between two points using OSRM with retries."""
+        for attempt in range(retries):
+            try:
+                url_ab = f"{self.osrm_url}/route/v1/driving/{start[1]},{start[0]};{end[1]},{end[0]}"
+                url_ba = f"{self.osrm_url}/route/v1/driving/{end[1]},{end[0]};{start[1]},{start[0]}"
+                response_ab = self.session.get(url_ab, params={"overview": "false"}, timeout=10)
+                response_ba = self.session.get(url_ba, params={"overview": "false"}, timeout=10)
 
-        url = f"{self.osrm_url}/route/v1/driving/{start[1]},{start[0]};{end[1]},{end[0]}"
-        params = {"overview": "false"}
-        response = self.session.get(url, params=params)
-        if response.status_code == 200:
-            data = response.json()
-            return data["routes"][0]["distance"] / 1000  # Convert to kilometers
-        else:
-            response.raise_for_status()
+                if response_ab.status_code == 200 and response_ba.status_code == 200:
+                    distance_ab = response_ab.json()["routes"][0]["distance"] / 1000  # Convert to km
+                    distance_ba = response_ba.json()["routes"][0]["distance"] / 1000  # Convert to km
+                    return distance_ab, distance_ba  # Return both distances
+
+            except ConnectionError:
+                print(f"Connection failed. Retrying {attempt + 1}/{retries}...")
+                time.sleep(backoff_factor ** attempt)
+
+        raise ConnectionError("Failed to connect to OSRM after retries.")
 
     def _calculate_distance_haversine(self, start, end):
         """Calculate the Haversine distance between two points (using haversine formula)"""
@@ -41,30 +48,31 @@ class RoadDistanceCalculator:
         dlat = math.radians(lat2 - lat1)
         dlon = math.radians(lon2 - lon1)
         a = (
-            math.sin(dlat / 2) ** 2
-            + math.cos(math.radians(lat1))
-            * math.cos(math.radians(lat2))
-            * math.sin(dlon / 2) ** 2
+                math.sin(dlat / 2) ** 2
+                + math.cos(math.radians(lat1))
+                * math.cos(math.radians(lat2))
+                * math.sin(dlon / 2) ** 2
         )
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return r * c
 
-    def calculate_distance_matrix(self, locations_df, chosen_company=None, candidate_name=None, method="osrm", computed_distances_df=None):
+    def calculate_distance_matrix(self, locations_df, chosen_company=None, candidate_name=None, method="osrm",
+                                  computed_distances_df=None):
         """
-        Calculate a distance matrix for a filtered list of begin and end points
+        Calculate a distance matrix for selected locations.
 
         Args:
             locations_df (pd.DataFrame): A DataFrame containing 'name', 'lat', and 'lon' columns.
-            chosen_company (str): This is the company where the manager wants to see potential partnerships for.
-            candidate_name (str): The candidate company to add new locations for distance calculation.
+            chosen_company (str): The company for which potential partnerships are being evaluated.
+            candidate_name (str): The candidate company for distance calculations.
             method (str): The method to calculate distances ('osrm' or 'haversine').
-            computed_distances_df (pd.DataFrame): A DataFrame of already calculated distances.
+            computed_distances_df (pd.DataFrame): Previously calculated distances, if available.
 
         Returns:
-            pd.DataFrame: A DataFrame with distances between all filtered rows and all columns.
+            pd.DataFrame: A DataFrame with asymmetric distances between locations.
         """
         if computed_distances_df is None:
-            # Get rows for the chosen company and all columns for other locations
+            # Filter only rows belonging to chosen_company
             filtered_rows_df = locations_df[locations_df["name"].str.contains(chosen_company, case=False, na=False)]
             all_columns_df = locations_df
 
@@ -76,7 +84,8 @@ class RoadDistanceCalculator:
             column_lats = all_columns_df["lat"].tolist()
             column_longs = all_columns_df["lon"].tolist()
 
-            matrix = pd.DataFrame(index=row_names, columns=column_names, dtype=float)
+            # Initialize matrix with chosen company rows and all columns
+            matrix = pd.DataFrame(float('nan'), index=row_names, columns=column_names)
 
             pairs = [
                 ((row_lats[i], row_longs[i]), (column_lats[j], column_longs[j]))
@@ -90,30 +99,35 @@ class RoadDistanceCalculator:
                 end = (end_lat, end_lon)
 
                 if method == "osrm":
-                    return self._calculate_distance_osrm(start, end)
+                    distance_ab, distance_ba = self._calculate_distance_osrm(start, end)
                 elif method == "haversine":
-                    return self._calculate_distance_haversine(start, end)
+                    distance_ab = self._calculate_distance_haversine(start, end)
+                    distance_ba = self._calculate_distance_haversine(end, start)
                 else:
                     raise ValueError("Invalid method specified. Use 'osrm' or 'haversine'.")
 
-            with ThreadPoolExecutor(max_workers=10) as executor:
+                return distance_ab, distance_ba
+
+            # Use threading to speed up calculations
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 distances = list(executor.map(calculate_pair, pairs))
 
             index = 0
-            for i in range(len(row_lats)):
-                for j in range(len(column_lats)):
-                    matrix.iloc[i, j] = distances[index]
+            for i, row_name in enumerate(row_names):
+                for j, col_name in enumerate(column_names):
+                    distance_ab, distance_ba = distances[index]
+                    matrix.at[row_name, col_name] = distance_ab  # A to B
                     index += 1
 
         else:
-            # Filter the computed_distances_df to only keep columns containing chosen_company, candidate_name, or 'Depot'
+            # Filter the computed_distances_df to include only chosen_company, candidate_name, and 'Depot'
             filtered_columns = [col for col in computed_distances_df.columns if
                                 chosen_company in col or candidate_name in col or 'Depot' in col]
             updated_matrix = computed_distances_df.loc[:, filtered_columns].copy()
 
-            # Add rows for each location in the candidate_name
+            # Add rows for candidate_name and Depot
             candidate_df = locations_df[locations_df["name"].str.contains(candidate_name, case=False, na=False) |
-            locations_df["name"].str.contains("Depot", case=False, na=False)]
+                                        locations_df["name"].str.contains("Depot", case=False, na=False)]
             candidate_names = candidate_df["name"].tolist()
             candidate_lats = candidate_df["lat"].tolist()
             candidate_longs = candidate_df["lon"].tolist()
@@ -131,13 +145,16 @@ class RoadDistanceCalculator:
                         end = (col_lat, col_lon)
 
                         if method == "osrm":
-                            distance = self._calculate_distance_osrm(start, end)
+                            distance_ab, distance_ba = self._calculate_distance_osrm(start, end)
                         elif method == "haversine":
-                            distance = self._calculate_distance_haversine(start, end)
+                            distance_ab = self._calculate_distance_haversine(start, end)
+                            distance_ba = self._calculate_distance_haversine(end, start)
 
-                        updated_matrix.loc[candidate_name, col_name] = distance
-                        updated_matrix.loc[col_name, candidate_name] = distance
-                updated_matrix.loc["Depot", "Depot"] = 0
+                        updated_matrix.loc[candidate_name, col_name] = distance_ab
+                        updated_matrix.loc[col_name, candidate_name] = distance_ba
+
+            updated_matrix.loc["Depot", "Depot"] = 0
+
             return updated_matrix
 
         return matrix
@@ -145,4 +162,5 @@ class RoadDistanceCalculator:
     def add_depot(self, input_df, depot_lat, depot_lon):
         depot_row = {"name": "Depot", 'lat': depot_lat, 'lon': depot_lon}
         return pd.concat([pd.DataFrame([depot_row]), input_df], ignore_index=True)
+
 
