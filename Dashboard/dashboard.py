@@ -74,6 +74,8 @@ class Dashboard:
             st.session_state.input_df_numbered = None
         if "input_df_wdepot" not in st.session_state:
             st.session_state.input_df_wdepot = None
+        if "full_matrix" not in st.session_state:
+            st.session_state.full_matrix = None
 
         # File uploader
         fl = st.file_uploader(":file_folder: Upload a file", type=(["csv"]))
@@ -111,11 +113,12 @@ class Dashboard:
             "Pick your Capacity:",
             min_value=2,
                 value=2,
+            max_value=20,
             step=1,
             #key='vehicle_capacity'
         )
 
-        heuristics = list(["greedy", "boundingbox"])
+        heuristics = list(["greedy", "bounding_box", "k_means", "dbscan"])
         st.session_state.heuristic = st.sidebar.selectbox("Pick your Heuristic:", heuristics)#, key='heuristics_choice')
 
         distance_choices = list(["haversine", "osrm (Docker Required)"])

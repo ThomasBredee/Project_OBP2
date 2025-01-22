@@ -44,9 +44,21 @@ if __name__ == "__main__":
         start_time = time.time()
         # Generate ranking based on heuristic
         if st.session_state.heuristic == "greedy":
-            st.session_state.ranking = heuristic.greedy(st.session_state.reduced_distance_df)
-        elif st.session_state.heuristic == "boundingbox":
-            st.session_state.ranking = heuristic.bounding_box(session_state.input_df_numbered, st.session_state.reduced_distance_df)
+            st.session_state.ranking = heuristic.greedy(st.session_state.reduced_distance_df, comparing = False)
+        elif st.session_state.heuristic == "bounding_box":
+            st.session_state.ranking = heuristic.bounding_box(st.session_state.input_df,
+                                                              st.session_state.reduced_distance_df, comparing = False)
+        elif st.session_state.heuristic == "k_means":
+            st.session_state.full_matrix = algorithm.calculate_square_matrix(st.session_state.input_df_numbered)
+            st.session_state.ranking = heuristic.k_means(st.session_state.input_df,
+                                                         st.session_state.input_df_numbered,
+                                                         st.session_state.reduced_distance_df,
+                                                         st.session_state.full_matrix, weighted = False)
+        elif st.session_state.heuristic == "dbscan":
+            st.session_state.full_matrix = algorithm.calculate_square_matrix(st.session_state.input_df)
+            st.session_state.ranking = heuristic.dbscan(st.session_state.input_df,
+                                                         st.session_state.reduced_distance_df)
+
 
         st.session_state.execute_Ranking = False
         st.session_state.show_Ranking = True
