@@ -20,7 +20,7 @@ LAT_DEPOT = 52.2517788
 
 if __name__ == "__main__":
     ###get the data
-    input_df = pd.read_csv("../Data/manyLarge.csv")
+    input_df = pd.read_csv("../Data/mini.csv")
     input_df_original = input_df.copy()
     input_df['name'] = input_df.groupby('name').cumcount().add(1).astype(str).radd(input_df['name'] + "_")
 
@@ -31,16 +31,17 @@ if __name__ == "__main__":
         input_df, chosen_company=CHOSEN_COMPANY,
         candidate_name=None, method="haversine", computed_distances_df=None)
 
-    square_matrix = calculator.calculate_square_matrix(input_df)
+    #square_matrix = calculator.calculate_square_matrix(input_df)
     print('time square matrix', time.time() - start_time)
     algorithms = CandidateRanking()
     start_time = time.time()
+    filtered_df =  calculator.filter_df(input_df_original)
     # algorithm1 = algorithms.greedy(distance_matrix, comparing = False)
-    algorithm2 = algorithms.bounding_box(input_df_original,distance_matrix,comparing= False)
+    #algorithm2 = algorithms.bounding_box(input_df_original,distance_matrix,comparing= False)
     #algorithm3 = algorithms.k_means(input_df_original, input_df, distance_matrix, square_matrix, weighted=False)
-    # algorithm4 = algorithms.dbscan(input_df_original, distance_matrix)
+    #algorithm4 = algorithms.dbscan(input_df_original, distance_matrix)
     # percentages = algorithms.features_dbscan(input_df_original, input_df,distance_matrix, square_matrix)
-    print(algorithm2)
+    #print(algorithm4)
 
     # tune_dbscan = algorithms.dbscan_tuning_silscore(input_df, input_df_original, distance_matrix, square_matrix)
 

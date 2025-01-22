@@ -13,6 +13,8 @@ import requests
 import math
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
+import geopandas as gpd
+from shapely.geometry import Point
 
 
 
@@ -175,3 +177,20 @@ class RoadDistanceCalculator:
         distance_matrix = pd.DataFrame(distance_matrix, index=df['name'], columns=df['name'])
 
         return distance_matrix
+
+    def filter_df(self,df):
+        world = gpd.read_file("../Data/ne_110m_admin_0_countries.shp")
+        netherlands_boundary = world[world['NAME'] == 'Netherlands']  # Adjust column name if necessary
+
+        # Convert DataFrame to GeoDataFrame
+        geometry = [Point(xy) for xy in zip(df['lon'], df['lat'])]
+        gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")  # EPSG:4326 is WGS 84
+
+        # Filter rows within the Netherlands' boundary
+        gdf = gdf[gdf.geometry.within(netherlands_boundary.unary_union)]
+        gdf = gdf.drop_duplicates(subset=['lat', 'lon'], keep='first')
+
+        # Return the DataFrame without the geometry column
+        filtered_df = gdf.drop(columns='geometry')
+        print(filtered_df)
+        return filtered_df

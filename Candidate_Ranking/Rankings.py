@@ -350,7 +350,7 @@ class CandidateRanking:
         scaler = StandardScaler()
         df[['lat_scaled', 'lon_scaled']] = scaler.fit_transform(df[['lat', 'lon']])
 
-        dbscan = DBSCAN(eps=0.15, min_samples=2)
+        dbscan = DBSCAN(eps=0.1, min_samples=2)
         df['cluster'] = dbscan.fit_predict(df[['lat_scaled', 'lon_scaled']])
 
         ranking = self.get_percentages(df, chosen_company)
