@@ -14,6 +14,9 @@ from Candidate_Ranking.Rankings import CandidateRanking
 import pandas as pd
 import random
 import re
+import time
+import pandas as pd
+from requests.exceptions import ConnectionError
 
 ####### INPUTS FROM THE MODEL VARIABLES
 LONG_DEPOT = 5.26860985
@@ -54,7 +57,7 @@ if __name__ == "__main__":
     results = []
 
     # Add depot to the input dataframe
-    for row in range(0, 1000):
+    for row in range(0, 200):
         print('Making row:', row)
         distance_calc = RoadDistanceCalculator()
 
@@ -74,14 +77,34 @@ if __name__ == "__main__":
         # Instantiate VRP solver
         vrp_solver = VRPSolver()
 
+        # Simple retry logic in place when calling the function
+        max_retries = 6
+        wait_time = 30  # 60 seconds before retrying
+
+        for attempt in range(max_retries):
+            try:
+                print(f"Attempt {attempt + 1} of {max_retries} to calculate the distance matrix...")
+                distance_matrix_ranking = distance_calc.calculate_distance_matrix(
+                    input_df,
+                    chosen_company=chosen_company,
+                    candidate_name=None,
+                    method="osrm",
+                    computed_distances_df=None
+                )
+                print("Distance matrix calculated successfully.")
+                break  # If successful, exit the retry loop
+            except ConnectionError as e:
+                print(f"Connection failed: {e}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("Max retries reached. Failed to calculate distance matrix.")
+                    distance_matrix_ranking = None  # Ensure a value is assigned in case of failure
+        else:
+            print("Error: No distance matrix was calculated.")
+
         # Calculate the full distance matrix for the chosen company
-        distance_matrix_ranking = distance_calc.calculate_distance_matrix(
-            input_df,
-            chosen_company=chosen_company,
-            candidate_name=None,
-            method="osrm",
-            computed_distances_df=None
-        )
 
         ### Get candidate ranking
         ranking = CandidateRanking()
@@ -91,13 +114,29 @@ if __name__ == "__main__":
 
         # Calculate the distance matrix for VRP
         input_df_for_vrp = distance_calc.add_depot(input_df, LAT_DEPOT, LONG_DEPOT)
-        distance_matrix_vrp = distance_calc.calculate_distance_matrix(
-            input_df_for_vrp,
-            chosen_company=chosen_company,
-            candidate_name=chosen_candidate,
-            method="osrm",
-            computed_distances_df=distance_matrix_ranking
-        )
+        for attempt in range(max_retries):
+            try:
+                print(f"Attempt {attempt + 1} of {max_retries} to calculate the distance matrix...")
+                distance_matrix_vrp = distance_calc.calculate_distance_matrix(
+                    input_df_for_vrp,
+                    chosen_company=chosen_company,
+                    candidate_name=chosen_candidate,
+                    method="osrm",
+                    computed_distances_df=distance_matrix_ranking
+                )
+                print("Distance matrix calculated successfully.")
+                break  # If successful, exit the retry loop
+            except ConnectionError as e:
+                print(f"Connection failed: {e}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("Max retries reached. Failed to calculate distance matrix.")
+                    distance_matrix_vrp = None  # Ensure a value is assigned in case of failure
+        else:
+            print("Error: No distance matrix was calculated.")
+
         # Filter the distance matrix
         filtered_matrix = distance_matrix_vrp
 
@@ -157,6 +196,6 @@ if __name__ == "__main__":
     results_df = pd.DataFrame(results)
 
     # Save to CSV file
-    results_df.to_csv("train_df_greedy_1000_osrm.csv", index=False)
+    results_df.to_csv("train_df_greedy_osrm.csv", index=False)
 
     print("Results saved successfully!")

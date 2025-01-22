@@ -24,6 +24,4 @@ class AlgorithmEvaluation:
             expected_gain = (total_distance_single - total_distance_collab) / num_orders_single
         else:
             expected_gain = 0
-
-        print(f"Expected Gain (Distance Saved per Order): {expected_gain}")
         return expected_gain

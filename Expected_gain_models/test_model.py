@@ -16,7 +16,7 @@ class ModelTester:
         self.scaler = joblib.load(scaler_file)
 
     def load_test_data(self, file_path):
-        df = pd.read_csv(file_path).head(10)  # Test only on 10 rows
+        df = pd.read_csv(file_path)  # Test only on 10 rows
         X_test = df[['totalsum', 'number_stops', 'Max_to_depot', 'Min_to_depot', 'vehicle_cap', 'greedy_total_sum']]
         y_test = df['real_km_order']
         return X_test, y_test
@@ -53,6 +53,6 @@ class ModelTester:
 
 # Example usage
 if __name__ == "__main__":
-    path = "Expected_gain/TrainedModels/RF/"
-    tester = ModelTester(f"{path}random_forest_model.pkl", f"{path}scaler.pkl")
-    tester.evaluate("tester.csv")
+    path = "Expected_gain_models/osrm/TrainedModels/RF/"
+    tester = ModelTester(f"{path}random_forest_model_greedy_osrm.pkl", f"{path}scaler_greedy_osrm.pkl")
+    tester.evaluate("Expected_gain_models/osrm/TrainData/test_df_greedy_osrm.csv")

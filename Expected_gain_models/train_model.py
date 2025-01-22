@@ -59,8 +59,8 @@ class ModelTrainer:
         print(f"Test MSE: {test_mse:.2f}")
 
         # Save the trained model and scaler
-        joblib.dump(self.model, f"{self.model_type}_model_greedy.pkl")
-        joblib.dump(self.scaler, "scaler_greedy.pkl")
+        joblib.dump(self.model, f"{self.model_type}_model_greedy_osrm.pkl")
+        joblib.dump(self.scaler, "scaler_greedy_osrm.pkl")
 
         return self.model, self.scaler
 
@@ -68,4 +68,4 @@ class ModelTrainer:
 # Example usage
 if __name__ == "__main__":
     trainer = ModelTrainer(model_type="random_forest")  # Change to "linear_regression" if needed
-    trainer.train("Expected_gain/TrainData/training_df_medium_1k_rows.csv")
+    trainer.train("Expected_gain_models/osrm/TrainData/train_df_greedy_osrm.csv")

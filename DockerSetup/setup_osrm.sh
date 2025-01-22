@@ -17,6 +17,6 @@ fi
 echo "Building the OSRM Docker image for the Netherlands map ......"
 docker build -t osrm-netherlands .
 
-# Run the OSRM server (container)
+# Run the osrm server (container)
 echo "Starting the OSRM server on port 5000 ......"
-docker run -m 8g --cpus=4 -d -p 5000:5000 osrm-netherlands
+docker run -p 5000:5000 osrm-netherlands

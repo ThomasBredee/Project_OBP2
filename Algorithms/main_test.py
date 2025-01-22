@@ -13,21 +13,24 @@ from Algorithms.distance_calculator import RoadDistanceCalculator
 from Algorithms.solver_pyvrp import VRPSolver
 from Candidate_Ranking.Rankings import CandidateRanking
 from Algorithms.algorithm_evaluation import AlgorithmEvaluation
+from Expected_gain_prediction.make_prediction import ModelPredictor
+from Expected_gain_prediction.prepare_input import PrepareInput
 import pandas as pd
+import joblib
 import time
 
 
 #######INPUTS FROM THE MODEL VARIABLES
-TRUCK_CAPACITY =  2
-CHOSEN_COMPANY = "Pioneer Networks"
-CHOSEN_CANDIDATE = "Global Group"
+TRUCK_CAPACITY =  4
+CHOSEN_COMPANY = "Elite Industries"
+CHOSEN_CANDIDATE = "Swift Solutions"
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 
 if __name__ == "__main__":
 
     ###get the data
-    input_df = pd.read_csv("Data/mini.csv")
+    input_df = pd.read_csv("Data/many.csv")
     input_df['name'] = input_df.groupby('name').cumcount().add(1).astype(str).radd(input_df['name'] + "_")
 
     ###get distance matrix for chosen company
@@ -37,10 +40,22 @@ if __name__ == "__main__":
 
     ###get candidate ranking
     ranking = CandidateRanking()
-    algorithm1 = ranking.greedy(distance_matrix_ranking)
+    algorithm1 = ranking.greedy(distance_matrix_ranking, comparing = False)
 
-    ###get the full distance matrix of best company
+    ###make prediction df
     input_df = distance_calc.add_depot(input_df, LAT_DEPOT, LONG_DEPOT)
+    preperator = PrepareInput()
+    prediction_df = preperator.prep_greedy(input_df, CHOSEN_COMPANY, algorithm1.index, "haversine", distance_matrix_ranking,
+                                           TRUCK_CAPACITY, algorithm1)
+    path = "Expected_gain_models/osrm/TrainedModels/RF/"
+    # Load the saved scaler from a file
+    scaler = joblib.load(f"{path}scaler_greedy_osrm.pkl")
+    # Load the saved model
+    model = joblib.load(f"{path}random_forest_model_greedy_osrm.pkl")
+    predictor = ModelPredictor(model,scaler)
+
+    predicted_df = predictor.predict_for_candidates(prediction_df)
+    ###get the full distance matrix of best company
     distance_matrix_vrp= distance_calc.calculate_distance_matrix(input_df, chosen_company=CHOSEN_COMPANY,
         candidate_name=CHOSEN_CANDIDATE, method="osrm", computed_distances_df=distance_matrix_ranking)
 
@@ -59,7 +74,7 @@ if __name__ == "__main__":
     )
     solution_single, routes_single = vrp_solver.solve(
         m=model_single,
-        max_runtime=2,
+        max_runtime=1,
         display=False,
         current_names=current_names_single
     )
@@ -68,7 +83,9 @@ if __name__ == "__main__":
         distance_matrix=distance_matrix_vrp
     )
     vrp_solver.plotRoute(routes_single, input_df)
+    predicted_df['Prediction'] = avg_distance_per_order_single - predicted_df['Prediction']
 
+    print(f"Gain per order is: {predicted_df['Prediction'][CHOSEN_CANDIDATE]}")
     # --- Collaboration ---
     print("Solving VRP for Collaboration...")
     model_collab, current_names_collab = vrp_solver.build_model(
@@ -98,14 +115,6 @@ if __name__ == "__main__":
         total_distance_collab=total_distance_collab,
         num_orders_single=len(routes_single)
     )
-
-    # Print final summary
-    print("\nSummary:")
-    print(
-        f"Single Company: Total Distance = {total_distance_single}, Avg Distance per Order = {avg_distance_per_order_single}")
-    print(
-        f"Collaboration: Total Distance = {total_distance_collab}, Avg Distance per Order = {avg_distance_per_order_collab}")
-    print(f"Gain: {-expected_gain} km")
 
 
 
