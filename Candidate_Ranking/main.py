@@ -12,7 +12,7 @@ import pandas as pd
 import time
 import random
 
-TRUCK_CAPACITY = 5
+TRUCK_CAPACITY = 5 #
 CHOSEN_COMPANY = "Global Corporation"
 CHOSEN_CANDIDATE = "Global Technologies"
 LONG_DEPOT = 5.26860985
