@@ -13,14 +13,14 @@ import time
 import random
 
 TRUCK_CAPACITY = 5
-CHOSEN_COMPANY = "Dynamic Industries"
-CHOSEN_CANDIDATE = "NextGen Technologies"
+CHOSEN_COMPANY = "Global Corporation"
+CHOSEN_CANDIDATE = "Global Technologies"
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 
 if __name__ == "__main__":
     ###get the data
-    input_df = pd.read_csv("../Data/manyLarge.csv")
+    input_df = pd.read_csv("../Data/medium.csv")
     input_df_original = input_df.copy()
     input_df['name'] = input_df.groupby('name').cumcount().add(1).astype(str).radd(input_df['name'] + "_")
 
@@ -36,11 +36,12 @@ if __name__ == "__main__":
     algorithms = CandidateRanking()
     start_time = time.time()
     # algorithm1 = algorithms.greedy(distance_matrix, comparing = False)
-    algorithm2 = algorithms.bounding_box(input_df_original,distance_matrix,comparing= False)
+    #algorithm2 = algorithms.bounding_box(input_df_original,distance_matrix,comparing= False)
     #algorithm3 = algorithms.k_means(input_df_original, input_df, distance_matrix, square_matrix, weighted=False)
     # algorithm4 = algorithms.dbscan(input_df_original, distance_matrix)
     # percentages = algorithms.features_dbscan(input_df_original, input_df,distance_matrix, square_matrix)
-    print(algorithm2)
+    #print(algorithm2)
+    algorithms.dbscan2(input_df_original, input_df, distance_matrix, square_matrix)
 
     # tune_dbscan = algorithms.dbscan_tuning_silscore(input_df, input_df_original, distance_matrix, square_matrix)
 

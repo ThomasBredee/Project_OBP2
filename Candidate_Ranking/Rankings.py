@@ -13,12 +13,13 @@ import matplotlib.pyplot as plt
 from geopy.distance import geodesic
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, euclidean_distances
 from sklearn.cluster import DBSCAN
 from Algorithms.distance_calculator import RoadDistanceCalculator
 from scipy.stats import spearmanr
 from sklearn.metrics import pairwise_distances_argmin_min
 from scipy.spatial.distance import pdist, squareform
+from math import radians
 
 
 class CandidateRanking:
@@ -324,8 +325,7 @@ class CandidateRanking:
             mean_distance = upper_triangle_values.mean() if len(names) > 1 else 0
             average_distances[cluster] = mean_distance
             sil_scores[cluster]= (b-mean_distance)/max(b,mean_distance)
-        return np.mean(sil_scores),mean_distance
-
+        return np.mean(sil_scores)
 
 
     def average_distance_between_clusters(self,df, distance_matrix):
@@ -377,15 +377,15 @@ class CandidateRanking:
 
         unique_clusters = df_new.loc[df_new['name'] == chosen_company, 'cluster'].unique()
         filtered_df = df_new[df_new['cluster'].isin(unique_clusters)]
-
         matching_counts = filtered_df.groupby('name').size()
         total_counts = df_new.groupby('name').size()
-
         percentages = (matching_counts / total_counts).reset_index()
+
         percentages.rename(columns={0: 'Percentage'}, inplace=True)
         percentages = percentages.sort_values(by=['Percentage'], ascending=False).reset_index(drop=True)
         percentages['Percentage'] = percentages['Percentage'].fillna(0)
         percentages = percentages[percentages['name'] != chosen_company]
+        percentages["Rank"] = range(1, len(percentages) + 1)
         return percentages
 
 
@@ -522,3 +522,188 @@ class CandidateRanking:
             i += 1
         argmax = np.argmax(list(sil_scores.values()))
         print("OPTIMAL EPS:", eps[argmax])
+
+
+    def dbscan2(self, input_df_org, input_df, matrix, full_matrix):
+        matrix1 = self._clean_column_and_index_labels(matrix)
+        chosen_company = matrix1.index[0]
+        print(chosen_company)
+
+        my_list = []
+        for i in range(len(full_matrix)):
+            z=0
+            my_list.append((full_matrix.iloc[i] < 50).sum() / len(full_matrix.iloc[i]))
+            #print((full_matrix.iloc[i] < 8).sum() / len(full_matrix.iloc[i]))
+
+        avg = sum(my_list) / len(my_list)
+        #print("AVG: ", avg)
+        total = avg * len(full_matrix)
+        minsamples = round(total, 0)
+        minsamples = int(minsamples)
+        #print(minsamples)
+
+        # Perform DBSCAN clustering
+        eps = [3,4,5,6,7,8,9,10,11,12,13,14]  # Maximum distance for clustering
+        min_samples = [2,3,4,5,6]   # Minimum number of points to form a cluster
+
+
+        true_data = pd.read_excel("../Data/ranking_results_truck_cap_10_haversine_medium.xlsx", sheet_name=1, index_col=0)
+        true_col_data = true_data[chosen_company]
+        true_col_data.drop(chosen_company, inplace=True)
+        true_col_data = true_col_data.sort_values()
+        true = true_col_data.values
+
+        highest_silscore = 0
+        highest_corr = 0
+        optimal_eps = 0
+        optimal_ms =0
+        for e in eps:
+            for ms in min_samples:
+                df_temp = input_df_org.copy()
+                dbscan = DBSCAN(eps = e, min_samples = ms, metric = 'precomputed')
+                clusters = dbscan.fit_predict(full_matrix)
+                df_temp['cluster'] = clusters
+                if df_temp['cluster'].eq(-1).all():
+                    break
+
+                df_temp = self.assign_noise_points2(df_temp, chosen_company, True)
+                df_temp = df_temp[df_temp['cluster'] != -1]
+                if (len(df_temp) / len(input_df_org)) < 0.5:
+                    continue
+
+                percentages = self.get_percentages(df_temp, chosen_company)
+                percentages = percentages.set_index("name").loc[true_col_data.index].reset_index()
+
+                test = percentages['Rank'].values
+                correlation, p_value = spearmanr(true, test)
+
+                #num_clusters = len(df_temp['cluster'].unique())
+
+                #b = self.average_distance_between_clusters(df_temp, full_matrix)
+                #sil_score = self.mean_intra_cluster_distance(df_temp, full_matrix, b, num_clusters)
+                if correlation > highest_corr:
+                    optimal_ms = ms
+                    optimal_eps = e
+                    highest_corr = correlation
+
+                break
+                """"if sil_score > highest_silscore:
+                        optimal_ms = ms
+                        optimal_eps = e
+                        highest_silscore = sil_score"""
+
+        print("OPTIMAL EPS:", optimal_eps, "OPTIMAL MS:", optimal_ms, 'HIGHEST SCORE:', highest_corr)
+        df_temp = input_df_org.copy()
+        dbscan = DBSCAN(eps = optimal_eps, min_samples = optimal_ms, metric = 'precomputed')
+        clusters = dbscan.fit_predict(full_matrix)
+        df_temp['cluster'] = clusters
+        df_temp = self.assign_noise_points2(df_temp, chosen_company, True)
+        df_temp = df_temp[df_temp['cluster'] != -1]
+        percentages = self.get_percentages(df_temp, chosen_company)
+
+        percentages.sort_values(by=['name'], inplace=True)
+        test = percentages['Rank'].values
+
+        print(percentages)
+
+        """
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric='precomputed')
+        clusters = dbscan.fit_predict(full_matrix)
+
+        input_df_org['cluster'] = clusters
+        input_df['cluster'] = clusters
+
+        print(input_df_org['cluster'].value_counts())
+        df_new = self.assign_noise_points2(input_df_org, chosen_company)
+
+        df_new = df_new[df_new['cluster'] != -1]
+
+        percentages = self.get_percentages(df_new, chosen_company)
+        print(percentages)
+        """
+
+
+    def assign_noise_points2(self, df, chosen_company, company):
+        if company is True:
+            noise_df = df[(df['name'] == chosen_company) & (df['cluster'] == -1)].reset_index(drop=True)
+        else:
+            noise_df = df[df['cluster'] == -1].reset_index(drop=True)
+
+        if noise_df.empty:
+            return df
+
+        clusters = df['cluster'].unique()
+        clusters = sorted(clusters)
+        centroids = []
+
+        for cluster in clusters:
+            if cluster != -1:  # Ignore noise
+                cluster_points = df[df['cluster'] == cluster]
+                centroid = (cluster_points['lat'].mean(), cluster_points['lon'].mean())
+                centroids.append(centroid)
+
+        centroids = np.array(centroids)
+
+        for i in range(len(noise_df)):
+            point = (noise_df['lat'][i], noise_df['lon'][i])
+            distances = euclidean_distances([point], centroids)
+            nearest_cluster = np.argmin(distances)
+            noise_df.loc[i, 'cluster'] = clusters[nearest_cluster]
+
+        for idx, row in noise_df.iterrows():
+            # Match rows in df based on name, lat, and lon
+            mask = (
+                    (df['name'] == row['name']) &
+                    (df['lat'] == row['lat']) &
+                    (df['lon'] == row['lon'])
+            )
+            df.loc[mask, 'cluster'] = row['cluster']
+
+        return df
+
+
+
+
+#Third ranking algorithm
+    def k_means(self, df_input, df_input_modified, full_dist_matrix, chosen_company):
+
+        #Get correct format for matrix
+        cleaned_matrix = self._clean_column_and_index_labels(full_dist_matrix)
+
+        #Prep calculation
+        minimal_clusters = len(df_input[df_input['name'] == chosen_company])
+        partner_names = cleaned_matrix.columns.unique().drop(chosen_company)
+        scaler = StandardScaler()
+        df_input[['lat_scaled', 'lon_scaled']] = scaler.fit_transform(df_input[['lat', 'lon']])
+
+        #Determine number of clusters
+        silhouette_scores_kmeans = {}
+        b_s = {}
+        a_s = {}
+        for i in range(minimal_clusters, minimal_clusters + 6):
+            kmeans = KMeans(n_clusters=i, random_state=42)
+            df_new = df_input_modified.copy()
+            df_new['cluster'] = kmeans.fit_predict(df_input[['lat_scaled', 'lon_scaled']])
+            b_s[i] = self._average_distance_between_clusters(df_new, full_dist_matrix)
+            silhouette_scores_kmeans[i], a_s[i] = self._mean_intra_cluster_distance(df_new, full_dist_matrix, b_s[i], i)
+
+        #Determine optimal clusters
+        optimal_clusters = max(silhouette_scores_kmeans, key=silhouette_scores_kmeans.get) + minimal_clusters
+        kmeans = KMeans(n_clusters=optimal_clusters, random_state=42)
+        df_input['cluster'] = kmeans.fit_predict(df_input[['lat_scaled', 'lon_scaled']])
+        clusters_company = df_input[df_input['name'] == chosen_company]['cluster'].unique()
+
+        #Creating ranking df
+        ranking_df = pd.DataFrame({'Percentage Overlap': 0}, index=partner_names)
+
+        #Get percentage overlap of clusters
+        for partner in partner_names:
+            partner_df = df_input[df_input['name'] == partner]
+            partner_data = partner_df[partner_df['name'] == partner]
+            is_in_cluster = partner_data['cluster'].isin(clusters_company)
+
+            #Calculate and assign percentage overlap directly to ranking_df
+            ranking_df.loc[partner, 'Percentage Overlap'] = is_in_cluster.mean()
+
+        return ranking_df.sort_values(by=['Percentage Overlap'], ascending=False)
+
