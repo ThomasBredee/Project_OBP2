@@ -10,7 +10,7 @@
 
 from Algorithms.distance_calculator import RoadDistanceCalculator
 from Algorithms.solver_pyvrp import VRPSolver
-from Candidate_Ranking.Rankings import CandidateRanking
+from Candidate_Ranking.ranking_methods import CandidateRanking
 import pandas as pd
 import random
 import re
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # Load data
     # Load the data
-    input_df1 = pd.read_csv("Data/mini.csv")
+    input_df1 = pd.read_csv("Data/osrm.csv")
     input_df2 = pd.read_csv("Data/medium.csv")
     input_df3 = pd.read_csv("Data/many.csv")
     input_df4 = pd.read_csv("Data/manyLarge.csv")

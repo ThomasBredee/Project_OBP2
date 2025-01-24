@@ -66,6 +66,8 @@ class Dashboard:
             st.session_state.route = None
         if "expected_gain" not in st.session_state:
             st.session_state.expected_gain = None
+        if "solution_print" not in st.session_state:
+            st.session_state.solution_print = None
 
         # Different versions of distance matrices
         if "reduced_distance_df" not in st.session_state:
@@ -111,7 +113,7 @@ class Dashboard:
             st.session_state.update2 = True
 
         # Use a number input for vehicle capacity with no maximum value
-        st.session_state.vehicle_capacity = st.sidebar.number_input(
+        VC = st.sidebar.number_input(
             "Pick your Capacity:",
             min_value=2,
                 value=2,
@@ -119,12 +121,24 @@ class Dashboard:
             step=1,
             #key='vehicle_capacity'
         )
+        if VC != st.session_state.vehicle_capacity:
+            st.session_state.vehicle_capacity = VC
+            st.session_state.update1 = True
+            st.session_state.update2 = True
 
         heuristics = list(["greedy", "bounding_box", "k_means", "dbscan", "machine_learning"])
-        st.session_state.heuristic = st.sidebar.selectbox("Pick your Heuristic:", heuristics)#, key='heuristics_choice')
+        heuristic = st.sidebar.selectbox("Pick your Heuristic:", heuristics)#, key='heuristics_choice')
+        if heuristic != st.session_state.heuristic:
+            st.session_state.heuristic = heuristic
+            st.session_state.update1 = True
+            st.session_state.update2 = True
 
         distance_choices = list(["haversine", "osrm"])
-        st.session_state.distance = st.sidebar.selectbox("Pick your Distance:", distance_choices)#, key='distance_choice')
+        distance = st.sidebar.selectbox("Pick your Distance:", distance_choices)#, key='distance_choice')
+        if distance != st.session_state.distance:
+            st.session_state.distance = distance
+            st.session_state.update1 = True
+            st.session_state.update2 = True
 
         if st.sidebar.button("Get Ranking"):
             st.session_state.update1 = False
@@ -140,7 +154,7 @@ class Dashboard:
 
         # Display candidates in the middle
         col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
+        with col1:
             # Use the radio button to directly update the selected candidate in session state
             selected_candidate = st.radio("Select a Candidate:", top3_candidates)#, key="selected_candidate")
             if selected_candidate != st.session_state.selected_candidate:
@@ -165,8 +179,16 @@ class Dashboard:
                 st.session_state.firsttime2 = False
 
 
-    #def solve_vrp(self):
-    #    st.session_state.execute_VRP = True
+    def download(self, type="ranking"):
+        if type == "ranking":
+            csv_file = st.session_state.ranking.to_csv(index=True)
+            file_name = f"Ranking_Export_{st.session_state.company_1}.csv"
+        elif type == "vrp":
+
+            print(st.session_state.solution)
+            csv_file = st.session_state.solution_print.to_csv(index=True)
+            file_name = f"VRP_Export_{st.session_state.company_1}.csv"
+        return csv_file, file_name
 
     def showmap(self, route_input, df_input):
         # Extract base company names (before the last underscore)

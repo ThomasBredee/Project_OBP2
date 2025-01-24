@@ -7,7 +7,7 @@
 
 from Algorithms.distance_calculator import RoadDistanceCalculator
 from Algorithms.solver_pyvrp import VRPSolver
-from Candidate_Ranking.Rankings import CandidateRanking
+from Candidate_Ranking.ranking_methods import CandidateRanking
 import pandas as pd
 
 

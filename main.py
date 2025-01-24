@@ -1,11 +1,12 @@
 from Algorithms.distance_calculator import RoadDistanceCalculator
 from Dashboard.dashboard import Dashboard
-from Candidate_Ranking.Rankings import CandidateRanking
+from Candidate_Ranking.ranking_methods import CandidateRanking
 from Algorithms.solver_pyvrp import VRPSolver
-from Expected_gain_prediction.prepare_input import  PrepareInput
-from Expected_gain_prediction.make_prediction import  ModelPredictor
+from Expected_gain_prediction.prepare_input import PrepareInput
+from Expected_gain_prediction.make_prediction import ModelPredictor
 import streamlit as st
 import time
+import pandas as pd
 import joblib
 
 LONG_DEPOT = 5.26860985
@@ -40,7 +41,7 @@ if __name__ == "__main__":
         # Calculate the distance matrix
         start_time = time.time()
         st.session_state.reduced_distance_df = algorithm.calculate_distance_matrix(
-            st.session_state.input_df_numbered, st.session_state.company_1, method=st.session_state.distance
+            st.session_state.input_df_numbered, st.session_state.company_1, method="haversine"
         )
         print("Distance matrix Ranking took:", round(time.time() - start_time, 4), "seconds")
 
@@ -63,14 +64,16 @@ if __name__ == "__main__":
                                                          st.session_state.reduced_distance_df)
         elif st.session_state.heuristic == "machine_learning":
             df_input_depot = algorithm.add_depot(st.session_state.input_df_numbered, LAT_DEPOT,
-                                                                   LONG_DEPOT)
+                                                 LONG_DEPOT)
             ranking = CandidateRanking()
-            greedy_ranking = ranking.greedy(st.session_state.reduced_distance_df, comparing = False)
+            greedy_ranking = ranking.greedy(st.session_state.reduced_distance_df, comparing=False)
 
             ###make prediction df
-            prep= PrepareInput()
-            prediction_df = prep.prep_greedy(df_input_depot, st.session_state.company_1, greedy_ranking.index, "haversine",
-                            st.session_state.reduced_distance_df, st.session_state.vehicle_capacity, greedy_ranking)
+            prep = PrepareInput()
+            prediction_df = prep.prep_greedy(df_input_depot, st.session_state.company_1, greedy_ranking.index,
+                                             "haversine",
+                                             st.session_state.reduced_distance_df, st.session_state.vehicle_capacity,
+                                             greedy_ranking)
             path = "Expected_gain_models/osrm/TrainedModels/RF/"
             # Load the saved scaler from a file
             scaler = joblib.load(f"{path}scaler_greedy_osrm.pkl")
@@ -82,7 +85,7 @@ if __name__ == "__main__":
             st.session_state.ranking = predicted_df.sort_values(by='Prediction')
 
 
-        print(st.session_state.ranking)
+        #print(st.session_state.ranking)
         st.session_state.execute_Ranking = False
         st.session_state.show_Ranking = True
         print("Ranking took:",  round(time.time() - start_time,4), "seconds")
@@ -90,6 +93,13 @@ if __name__ == "__main__":
     if st.session_state.show_Ranking and st.session_state.input_df is not None:
         # Display the ranking
         dashboard.display_ranking()
+        csv_file, file_name = dashboard.download(type="ranking")
+        st.sidebar.download_button(
+            label='Download Ranking',
+            data=csv_file,
+            file_name=file_name,
+            mime="text/csv"
+        )
 
     # Check if VRP execution is triggered
     if st.session_state.execute_VRP and st.session_state.selected_candidate and st.session_state.input_df is not None:
@@ -126,8 +136,23 @@ if __name__ == "__main__":
 
     if st.session_state.show_VRP and st.session_state.input_df is not None:
 
+
+
         st.write("### VRP Solution")
-        st.write(st.session_state.solution)
+        st.session_state.solution_print = pd.DataFrame(st.session_state.route, index=[f"Route_{i}" for i in range(len(st.session_state.route))])
+
+        col1, col2, col3 = st.columns([15, 1, 2.5])
+        with col1:
+            st.write(st.session_state.solution_print)
+        with col3:
+            csv_file, file_name = dashboard.download(type="vrp")
+            st.download_button(
+                label='Download VRP',
+                data=csv_file,
+                file_name=file_name,
+                mime="text/csv"
+            )
+
         #start_time_test = time.time()
         dashboard.showmap(st.session_state.route, st.session_state.input_df_wdepot)
         #print("\nTESTING UNITS", time.time() - start_time_test, "seconds\n")

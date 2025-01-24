@@ -6,7 +6,7 @@
 #                                                       #
 #########################################################
 
-from Candidate_Ranking.Rankings import CandidateRanking
+from Candidate_Ranking.ranking_methods import CandidateRanking
 from Algorithms.distance_calculator import RoadDistanceCalculator
 import pandas as pd
 import time

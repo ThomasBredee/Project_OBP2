@@ -45,6 +45,8 @@ class ModelPredictor:
         predictions = self.model.predict(scaled_features)
 
         # Create a DataFrame with chosen_candidate as index and predictions as the first column
-        prediction_df = pd.DataFrame(predictions, index=prediction_data['chosen_candidate'], columns=['Prediction'])
+        prediction_df = pd.DataFrame(predictions, index=prediction_data['chosen_candidate'], columns=['Predicted km per order'])
 
-        return prediction_df
+        df_sorted = prediction_df.sort_values(by='Predicted km per order')
+
+        return df_sorted
