@@ -13,10 +13,6 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.cluster import DBSCAN
-from Algorithms.distance_calculator import RoadDistanceCalculator
-from scipy.stats import spearmanr
-from sklearn.metrics import pairwise_distances_argmin_min
 
 class CandidateRanking:
     def _init_(self):

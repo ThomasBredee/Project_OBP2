@@ -20,8 +20,8 @@ import joblib
 
 #######INPUTS FOR MODEL FOR MAIN TEST
 TRUCK_CAPACITY =  4
-CHOSEN_COMPANY = "Elite Industries"
-CHOSEN_CANDIDATE = "Swift Ventures"
+CHOSEN_COMPANY = "Visionary Consulting"
+CHOSEN_CANDIDATE = "Visionary Ventures"
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     ##########Get partial distance matrix
     ###get distance matrix from chosen company to itself and all other locations in the input df
     distance_calc = RoadDistanceCalculator()
-    distance_matrix_ranking = distance_calc.calculate_distance_matrix(input_df_modified, chosen_company=CHOSEN_COMPANY, method="haversine")
+    distance_matrix_ranking = distance_calc.calculate_distance_matrix(input_df_modified, chosen_company=CHOSEN_COMPANY, method="osrm")
 
     ##########Get ranking
     ###get distance matrix squared (for kmeans)

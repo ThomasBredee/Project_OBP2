@@ -19,8 +19,9 @@ import pandas as pd
 #######INPUTS FROM THE MODEL VARIABLES
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
-METHOD = "haversine"
-FILE_SIZE = "mini"
+METHOD = "osrm"
+FILE_SIZE = "many"
+RUN_TIME = 1
 output_filename = f"VRP_results_{METHOD}_{FILE_SIZE}.xlsx"
 
 if __name__ == "__main__":
@@ -31,12 +32,10 @@ if __name__ == "__main__":
     distance_calc = RoadDistanceCalculator()
     df_with_depot = distance_calc.add_depot(df_modified, LAT_DEPOT, LONG_DEPOT)
 
-    # Calculate full distance matrix once
-    distance_calc = RoadDistanceCalculator()
     full_distance_matrix = distance_calc.calculate_full_distance_matrix(df_with_depot, method=METHOD)
 
     with pd.ExcelWriter(output_filename, engine='openpyxl') as writer:
-        for truck_cap in range(2, 20):
+        for truck_cap in range(2, 21):
             print(f"Processing for truck capacity: {truck_cap}")
             solutions_df = pd.DataFrame(index=input_df['name'].unique(), columns=input_df['name'].unique(),
                                         dtype=float)
@@ -64,8 +63,8 @@ if __name__ == "__main__":
 
                     solution_collab, routes_collab = vrp_solver.solve(
                         model=model_collab,
-                        max_runtime=1,  # Runtime in minutes
-                        display=True,
+                        max_runtime=RUN_TIME,
+                        display=False,
                         current_names=current_names_collab
                     )
 

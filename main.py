@@ -48,7 +48,7 @@ if __name__ == "__main__":
         start_time = time.time()
         # Generate ranking based on heuristic
         if st.session_state.heuristic == "greedy":
-            st.session_state.ranking = heuristic.greedy(st.session_state.reduced_distance_df, comparing = False)
+            st.session_state.ranking = heuristic.greedy(st.session_state.reduced_distance_df, st.session_state.company_1)
         elif st.session_state.heuristic == "bounding_box":
             st.session_state.ranking = heuristic.bounding_box(st.session_state.input_df,
                                                               st.session_state.reduced_distance_df, comparing = False)
@@ -121,9 +121,9 @@ if __name__ == "__main__":
         st.session_state.model, st.session_state.current_names = st.session_state.vrp_solver.build_model(
             st.session_state.input_df_wdepot,
             st.session_state.company_1,
-            st.session_state.selected_candidate,
-            distance_matrix_vrp,
             st.session_state.vehicle_capacity,
+            distance_matrix_vrp,
+            st.session_state.selected_candidate
         )
 
         st.session_state.solution, st.session_state.route = st.session_state.vrp_solver.solve(st.session_state.model, max_runtime=1, display=False,
