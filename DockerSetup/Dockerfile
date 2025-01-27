@@ -1,4 +1,4 @@
-# Use the official OSRM backend image
+# Use the official osrm backend image
 FROM osrm/osrm-backend:latest
 
 # Set the working directory inside the container
@@ -11,5 +11,5 @@ COPY netherlands-latest.osm.pbf /data/netherlands-latest.osm.pbf
 RUN osrm-extract -p /opt/car.lua /data/netherlands-latest.osm.pbf && \
     osrm-contract /data/netherlands-latest.osrm
 
-# Start the OSRM server
+# Start the osrm server
 CMD ["osrm-routed", "/data/netherlands-latest.osrm"]
