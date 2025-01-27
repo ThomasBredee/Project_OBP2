@@ -8,8 +8,9 @@
 #                                                       #
 #########################################################
 
+#Import
 from Candidate_Ranking.ranking_methods import CandidateRanking
-from Algorithms.distance_calculator import RoadDistanceCalculator
+from VRP_Solver.distance_calculator import RoadDistanceCalculator
 import pandas as pd
 from scipy.stats import spearmanr
 
@@ -19,7 +20,7 @@ class CalcSpearmans():
         self.correlation_df = pd.DataFrame()
         pass
 
-    def compute_spearman_greedy(self, true_ranking_df, input_df, input_df_modified, method, vehicle_cap):
+    def compute_spearman_greedy(self, true_ranking_df, input_df, method, vehicle_cap):
         """
         Handle the 'greedy' method for ranking with spearman.
         """
@@ -43,8 +44,12 @@ class CalcSpearmans():
             predicted_ranking_added = self._add_ranking(predicted_ranking)
             predicted_ranking = predicted_ranking_added['Ranking']
             true_ranking = true_ranking_column_without_chosen_comp['Rankings']
-            correlation, p_value = spearmanr(predicted_ranking, true_ranking)
+
+            #Reorder ranking
+            predicted_ranking_reordered = predicted_ranking.reindex(true_ranking.index)
+            correlation, p_value = spearmanr(predicted_ranking_reordered, true_ranking)
             correlations.append(correlation)
+
         self.correlation_df[vehicle_cap] = correlations
 
 
@@ -61,6 +66,7 @@ class CalcSpearmans():
             chosen_company = true_ranking_column.columns[0]
             true_ranking_column.columns = ['Rankings']
             true_ranking_column_without_chosen_comp = true_ranking_column[true_ranking_column['Rankings'] != len(true_ranking_df)]
+
             partial_distance_matrix = distance_calc.calculate_distance_matrix(
                 input_df_modified, chosen_company=chosen_company,
                 candidate_name=None, method=method, computed_distances_df=None
@@ -73,7 +79,10 @@ class CalcSpearmans():
             predicted_ranking_added = self._add_ranking(predicted_ranking)
             predicted_ranking = predicted_ranking_added['Ranking']
             true_ranking = true_ranking_column_without_chosen_comp['Rankings']
-            correlation, p_value = spearmanr(predicted_ranking, true_ranking)
+            # Reorder ranking
+            predicted_ranking_reordered = predicted_ranking.reindex(true_ranking.index)
+
+            correlation, p_value = spearmanr(predicted_ranking_reordered, true_ranking)
             correlations.append(correlation)
 
         self.correlation_df[vehicle_cap] = correlations
@@ -91,10 +100,6 @@ class CalcSpearmans():
             chosen_company = true_ranking_column.columns[0]
             true_ranking_column.columns = ['Rankings']
             true_ranking_column_without_chosen_comp = true_ranking_column[true_ranking_column['Rankings'] != len(true_ranking_df)]
-            partial_distance_matrix = distance_calc.calculate_distance_matrix(
-                input_df_modified, chosen_company=chosen_company,
-                candidate_name=None, method=method, computed_distances_df=None
-            )
 
             # Get full matrix for k-means
             full_matrix = distance_calc.calculate_square_matrix(input_df_modified)
@@ -104,10 +109,13 @@ class CalcSpearmans():
             predicted_ranking_added = self._add_ranking(predicted_ranking)
             predicted_ranking = predicted_ranking_added['Ranking']
             true_ranking = true_ranking_column_without_chosen_comp['Rankings']
-            correlation, p_value = spearmanr(predicted_ranking, true_ranking)
+            # Reorder ranking
+            predicted_ranking_reordered = predicted_ranking.reindex(true_ranking.index)
+
+            correlation, p_value = spearmanr(predicted_ranking_reordered, true_ranking)
             correlations.append(correlation)
 
-        self.correlation_df[vehicle_cap] = correlations
+        self.correlation_df[vehicle_cap]=correlations
 
     # def accuracy_dbscan(self, df, input_df, input_df_original, j):
     #     """

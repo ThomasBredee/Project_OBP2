@@ -210,6 +210,8 @@ class RoadDistanceCalculator:
 
         return distance_matrix
 
+    import time
+
     def calculate_full_distance_matrix(self, df, method="osrm"):
         """
         Calculate the full distance matrix for the DataFrame.
@@ -230,7 +232,18 @@ class RoadDistanceCalculator:
                 end = (df.iloc[j]['lat'], df.iloc[j]['lon'])
 
                 if method == 'osrm':
-                    distance_ab, distance_ba = self._calculate_distance_osrm(start, end)
+                    retries = 5
+                    for attempt in range(retries):
+                        try:
+                            distance_ab, distance_ba = self._calculate_distance_osrm(start, end)
+                            break  # If the call was successful, break out of the retry loop
+                        except Exception as e:
+                            if attempt < retries - 1:  # Check if we are not on the last retry
+                                print(
+                                    f"Retrying OSRM calculation between {df.iloc[i]['name']} and {df.iloc[j]['name']}, attempt {attempt + 1}")
+                                time.sleep(10)  # Wait for 10 seconds before retrying
+                            else:
+                                raise e  # Re-raise the last exception when retries are exhausted
                 else:
                     distance_ab = self._calculate_distance_haversine(start, end)
                     distance_ba = self._calculate_distance_haversine(end, start)

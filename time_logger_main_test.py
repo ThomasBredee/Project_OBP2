@@ -11,11 +11,11 @@
 # Imports
 import logging
 import time
-from Algorithms.distance_calculator import RoadDistanceCalculator
-from Algorithms.solver_pyvrp import VRPSolver
+from VRP_Solver.distance_calculator import RoadDistanceCalculator
+from VRP_Solver.solver_pyvrp import VRPSolver
 from Candidate_Ranking.ranking_methods import CandidateRanking
-from Expected_gain_prediction.make_prediction import ModelPredictor
-from Expected_gain_prediction.prepare_input import PrepareInput
+from Machine_Learning_Predict.make_prediction import ModelPredictor
+from Machine_Learning_Predict.prepare_input import PrepareInput
 import pandas as pd
 import joblib
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     substep_time = time.time()
     # SUBSTEP Get prediction model rf
-    path = "Expected_gain_models/osrm/TrainedModels/RF/"
+    path = "Machine_Learning_Train/osrm/TrainedModels/RF/"
     scaler = joblib.load(f"{path}scaler_greedy_osrm.pkl")
     model = joblib.load(f"{path}random_forest_model_greedy_osrm.pkl")
     predictor = ModelPredictor(model, scaler)

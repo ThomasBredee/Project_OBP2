@@ -1,9 +1,9 @@
-from Algorithms.distance_calculator import RoadDistanceCalculator
+from VRP_Solver.distance_calculator import RoadDistanceCalculator
 from Dashboard.dashboard import Dashboard
 from Candidate_Ranking.ranking_methods import CandidateRanking
-from Algorithms.solver_pyvrp import VRPSolver
-from Expected_gain_prediction.prepare_input import PrepareInput
-from Expected_gain_prediction.make_prediction import ModelPredictor
+from VRP_Solver.solver_pyvrp import VRPSolver
+from Machine_Learning_Predict.prepare_input import PrepareInput
+from Machine_Learning_Predict.make_prediction import ModelPredictor
 import streamlit as st
 import time
 import pandas as pd
@@ -74,7 +74,7 @@ if __name__ == "__main__":
                                              "haversine",
                                              st.session_state.reduced_distance_df, st.session_state.vehicle_capacity,
                                              greedy_ranking)
-            path = "Expected_gain_models/osrm/TrainedModels/RF/"
+            path = "Machine_Learning_Train/osrm/TrainedModels/RF/"
             # Load the saved scaler from a file
             scaler = joblib.load(f"{path}scaler_greedy_osrm.pkl")
             # Load the saved model

@@ -20,7 +20,7 @@ class TransformInput:
 
     def execute_validations(self, df):
         print("Starting validation process...")
-        df = self._drop_duplicates(df)
+        df = self.drop_duplicates(df)
         df = self._drop_floats(df)
         df = self._add_underscore(df)
         if self.check_road_proximity:
@@ -64,7 +64,7 @@ class TransformInput:
         # Return DataFrame excluding the points that are not near a road
         return df[df['near_road']].drop(columns=['near_road'])
 
-    def _drop_duplicates(self, df):
+    def drop_duplicates(self, df):
         """Remove duplicate rows based on latitude, longitude, and name."""
         duplicates = df.duplicated(subset=['lat', 'lon', 'name'], keep='first')
         removed_rows = df[duplicates]

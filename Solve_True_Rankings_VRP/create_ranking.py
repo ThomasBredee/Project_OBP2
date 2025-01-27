@@ -9,10 +9,10 @@
 #########################################################
 
 #Imports
-from Algorithms.distance_calculator import RoadDistanceCalculator
+from VRP_Solver.distance_calculator import RoadDistanceCalculator
 from Input_Transformation.transforming_input import TransformInput
 from openpyxl import Workbook
-from Algorithms.solver_pyvrp import VRPSolver
+from VRP_Solver.solver_pyvrp import VRPSolver
 import pandas as pd
 
 
@@ -20,7 +20,7 @@ import pandas as pd
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 METHOD = "osrm"
-FILE_SIZE = "many"
+FILE_SIZE = "medium"
 RUN_TIME = 1
 output_filename = f"VRP_results_{METHOD}_{FILE_SIZE}.xlsx"
 

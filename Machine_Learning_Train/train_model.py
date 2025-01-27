@@ -68,4 +68,4 @@ class ModelTrainer:
 # Example usage
 if __name__ == "__main__":
     trainer = ModelTrainer(model_type="random_forest")  # Change to "linear_regression" if needed
-    trainer.train("Expected_gain_models/osrm/TrainData/train_df_greedy_osrm.csv")
+    trainer.train("Machine_Learning_Train/osrm/TrainData/train_df_greedy_osrm.csv")

@@ -9,11 +9,12 @@
 #########################################################
 
 #Imports
-from Algorithms.distance_calculator import RoadDistanceCalculator
-from Algorithms.solver_pyvrp import VRPSolver
+from VRP_Solver.distance_calculator import RoadDistanceCalculator
+from VRP_Solver.solver_pyvrp import VRPSolver
 from Candidate_Ranking.ranking_methods import CandidateRanking
-from Expected_gain_prediction.make_prediction import ModelPredictor
-from Expected_gain_prediction.prepare_input import PrepareInput
+from Machine_Learning_Predict.make_prediction import ModelPredictor
+from Machine_Learning_Predict.prepare_input import PrepareInput
+from Input_Transformation.transforming_input import TransformInput
 import pandas as pd
 import joblib
 
@@ -33,8 +34,10 @@ if __name__ == "__main__":
 
     ###get the data
     input_df = pd.read_csv(path)
-    input_df_modified = input_df.copy()
-    input_df_modified['name'] = input_df.groupby('name').cumcount().add(1).astype(str).radd(input_df['name'] + "_")
+    check_road_proximity = True #Set true if OSRM container running
+    transformer = TransformInput(check_road_proximity=check_road_proximity)
+    input_df_kmeans = transformer.drop_duplicates(input_df)
+    input_df_modified = transformer.execute_validations(input_df)
 
     ##########Get partial distance matrix
     ###get distance matrix from chosen company to itself and all other locations in the input df
@@ -49,7 +52,7 @@ if __name__ == "__main__":
     ranking = CandidateRanking()
     greedy_ranking = ranking.greedy(distance_matrix_ranking, CHOSEN_COMPANY)
     circle_box_ranking= ranking.bounding_circle(input_df, distance_matrix_ranking, CHOSEN_COMPANY)
-    k_means_ranking = ranking.k_means(input_df, input_df_modified, full_matrix, CHOSEN_COMPANY)
+    k_means_ranking = ranking.k_means(input_df_kmeans, input_df_modified, full_matrix, CHOSEN_COMPANY)
 
 
     ###get candidate ranking methods (machine learning) / get predicted kilometers per order (For Greedy)
@@ -59,7 +62,7 @@ if __name__ == "__main__":
     prediction_df = prepper.prep_greedy(input_df_modified_with_depot, CHOSEN_COMPANY, greedy_ranking.index, "haversine", distance_matrix_ranking,
                                            TRUCK_CAPACITY, greedy_ranking)
     #get pre-trained model
-    path = "Expected_gain_models/osrm/TrainedModels/RF/"
+    path = "Machine_Learning_Train/osrm/TrainedModels/RF/"
     scaler = joblib.load(f"{path}scaler_greedy_osrm.pkl")
     model = joblib.load(f"{path}random_forest_model_greedy_osrm.pkl")
     predictor = ModelPredictor(model,scaler)

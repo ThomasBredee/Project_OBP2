@@ -3,8 +3,8 @@
 # Created on: 15/01/2025                                #
 # Created by: Lukas and Wester                          #
 #                                                       #
-# Updated on: 23/01/2025                                #
-# Updated by: Lukas and Dennis                          #
+# Updated on: 26/01/2025                                #
+# Updated by: Lukas and Dennis and Wester               #
 #                                                       #
 #########################################################
 
@@ -12,14 +12,15 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.metrics import euclidean_distances
 
 class CandidateRanking:
     def _init_(self):
         pass
 
     #Remove everything after '_' in column names and index
-    def _clean_column_and_index_labels(self, matrix):
+    def clean_column_and_index_labels(self, matrix):
         matrix_copy = matrix.copy()  #Create a copy to avoid modifying the original
         matrix_copy.columns = [col.split('_')[0] for col in matrix_copy.columns]
         matrix_copy.index = [idx.split('_')[0] for idx in matrix_copy.index]
@@ -31,9 +32,8 @@ class CandidateRanking:
 
     #First algorithm to solve ranking
     def greedy(self, partial_dist_matrix, chosen_company):
-
         #Clean column names and index
-        cleaned_matrix = self._clean_column_and_index_labels(partial_dist_matrix)
+        cleaned_matrix = self.clean_column_and_index_labels(partial_dist_matrix)
 
         #Sums the total distances of each potential partner
         grouped_df = cleaned_matrix.T.groupby(cleaned_matrix.columns).sum().T
@@ -48,9 +48,9 @@ class CandidateRanking:
     def bounding_circle(self, df_input, partial_dist_matrix, chosen_company):
 
         #Get correct format for matrix
-        cleaned_matrix = self._clean_column_and_index_labels(partial_dist_matrix)
+        cleaned_matrix = self.clean_column_and_index_labels(partial_dist_matrix)
 
-        #Get correct dfs
+        #Get sliced dfs for partner and company
         partner_names = cleaned_matrix.columns.unique().drop(chosen_company)
         company_df = df_input[df_input['name'] == chosen_company]
         partner_df = df_input[df_input['name'] != chosen_company]
@@ -79,7 +79,7 @@ class CandidateRanking:
     def k_means(self, df_input, df_input_modified, full_dist_matrix, chosen_company):
 
         #Get correct format for matrix
-        cleaned_matrix = self._clean_column_and_index_labels(full_dist_matrix)
+        cleaned_matrix = self.clean_column_and_index_labels(full_dist_matrix)
 
         #Prep calculation
         minimal_clusters = len(df_input[df_input['name'] == chosen_company])
@@ -118,6 +118,29 @@ class CandidateRanking:
 
         return ranking_df.sort_values(by=['Percentage Overlap'], ascending=False)
 
+    #fourth ranking algorithm
+    def dbscan(self, input_df, full_matrix, chosen_company, eps, ms):
+        df_copy = input_df.copy()
+
+        # Make DBSCAN
+        dbscan = DBSCAN(eps=eps, min_samples=ms, metric='precomputed')
+
+        # Assign clusters
+        clusters = dbscan.fit_predict(full_matrix)
+        df_copy['cluster'] = clusters
+
+        # Handle noise
+        df_noise_assign = self._assign_noise_points(df_copy, chosen_company, True)
+        df_filter_noise = df_noise_assign[df_noise_assign['cluster'] != -1]
+
+        # Get percentage results
+        percentages = self._get_percentages(df_filter_noise, chosen_company)
+        percentages.index = percentages["name"]
+        percentages = percentages.drop(columns=["name"])
+        percentages.index.name = None
+
+        return percentages
+
     def _mean_intra_cluster_distance(self,df_input_modified, distance_matrix, average_distance_between_clusters, k):
         #Obtain correct df format
         grouped = df_input_modified.groupby('cluster')
@@ -154,3 +177,61 @@ class CandidateRanking:
                         continue
 
         return np.mean(list(cluster_distances.values()))
+
+    def _assign_noise_points(self, df, chosen_company, company):
+        # Decide if all noise points are assigned or only company noise
+        if company is True:
+            noise_df = df[(df['name'] == chosen_company) & (df['cluster'] == -1)].reset_index(drop=True)
+        else:
+            noise_df = df[df['cluster'] == -1].reset_index(drop=True)
+
+        if noise_df.empty:
+            return df
+
+        # Get all unique clusters
+        clusters = df['cluster'].unique()
+        clusters = sorted(clusters)
+        centroids = []
+
+        # Get centroids of all clusters
+        for cluster in clusters:
+            if cluster != -1:  # Ignore noise
+                cluster_points = df[df['cluster'] == cluster]
+                centroid = (cluster_points['lat'].mean(), cluster_points['lon'].mean())
+                centroids.append(centroid)
+        centroids = np.array(centroids)
+
+        # Locate nearest cluster for noise points
+        for i in range(len(noise_df)):
+            point = (noise_df['lat'][i], noise_df['lon'][i])
+            distances = euclidean_distances([point], centroids)
+            nearest_cluster = np.argmin(distances)
+            noise_df.loc[i, 'cluster'] = clusters[nearest_cluster]
+
+        # Assign new clusters to df
+        for idx, row in noise_df.iterrows():
+            # Match rows in df based on name, lat, and lon
+            mask = (
+                    (df['name'] == row['name']) &
+                    (df['lat'] == row['lat']) &
+                    (df['lon'] == row['lon'])
+            )
+            df.loc[mask, 'cluster'] = row['cluster']
+
+        return df
+
+    def _get_percentages(self, df_new, chosen_company):
+        # Get unique clusters of the chosen company
+        unique_clusters = df_new.loc[df_new['name'] == chosen_company, 'cluster'].unique()
+        filtered_df = df_new[df_new['cluster'].isin(unique_clusters)]
+
+        matching_counts = filtered_df.groupby('name').size()  # Amount matching
+        total_counts = df_new.groupby('name').size()  # Total amount
+        percentages = (matching_counts / total_counts).reset_index()  # Amount matching / total amount
+
+        # Clean percentage output
+        percentages.rename(columns={0: 'Percentage'}, inplace=True)  # Rename
+        percentages = percentages.sort_values(by=['Percentage'], ascending=False).reset_index(drop=True)  # Sort
+        percentages['Percentage'] = percentages['Percentage'].fillna(0)
+        percentages = percentages[percentages['name'] != chosen_company]  # Drop chosen company
+        return percentages

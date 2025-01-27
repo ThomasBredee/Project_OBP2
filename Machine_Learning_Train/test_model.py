@@ -53,6 +53,6 @@ class ModelTester:
 
 # Example usage
 if __name__ == "__main__":
-    path = "Expected_gain_models/osrm/TrainedModels/RF/"
+    path = "Machine_Learning_Train/osrm/TrainedModels/RF/"
     tester = ModelTester(f"{path}random_forest_model_greedy_osrm.pkl", f"{path}scaler_greedy_osrm.pkl")
-    tester.evaluate("Expected_gain_models/osrm/TrainData/test_df_greedy_osrm.csv")
+    tester.evaluate("Machine_Learning_Train/osrm/TrainData/test_df_greedy_osrm.csv")
