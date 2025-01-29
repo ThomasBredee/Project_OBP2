@@ -12,7 +12,7 @@
 from VRP_Solver.distance_calculator import RoadDistanceCalculator
 from VRP_Solver.solver_pyvrp import VRPSolver
 from Candidate_Ranking.ranking_methods import CandidateRanking
-from Machine_Learning_Predict.make_prediction import ModelPredictor
+from Machine_Learning_Predict.make_candidate_prediction import ModelPredictor
 from Machine_Learning_Predict.prepare_input import PrepareInput
 from Input_Transformation.transforming_input import TransformInput
 import pandas as pd
@@ -23,6 +23,7 @@ import joblib
 TRUCK_CAPACITY =  4
 CHOSEN_COMPANY = "Visionary Consulting"
 CHOSEN_CANDIDATE = "Visionary Ventures"
+
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 
@@ -104,7 +105,7 @@ if __name__ == "__main__":
     vrp_solver.plotRoute(routes_single, input_df_modified_with_depot)
 
     ###get expected gain
-    predicted_df['Expected Gain'] = avg_distance_per_order_single - predicted_df['Predicted km per order']
+    #predicted_df['Expected Gain'] = avg_distance_per_order_single - predicted_df['Predicted km per order']
 
     ##########Solve VRP collaboration
     # --- Collaboration ---

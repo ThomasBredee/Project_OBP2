@@ -14,7 +14,7 @@ import time
 from VRP_Solver.distance_calculator import RoadDistanceCalculator
 from VRP_Solver.solver_pyvrp import VRPSolver
 from Candidate_Ranking.ranking_methods import CandidateRanking
-from Machine_Learning_Predict.make_prediction import ModelPredictor
+from Machine_Learning_Predict.make_candidate_prediction import ModelPredictor
 from Machine_Learning_Predict.prepare_input import PrepareInput
 import pandas as pd
 import joblib
