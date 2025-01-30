@@ -14,6 +14,9 @@ import streamlit as st
 LONG_DEPOT = 5.26860985
 LAT_DEPOT = 52.2517788
 
+##TEST push!!!
+code = 0
+
 if __name__ == "__main__":
     dashboard = Dashboard()
     algorithm = RoadDistanceCalculator()
